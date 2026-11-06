@@ -108,6 +108,7 @@ async fn buddy(app: AppHandle, mode: String) -> Result<(), String> {
         return Ok(());
     }
     let size = if mode == "large" { BUDDY_LARGE } else { BUDDY_SMALL };
+    let is_new = existing.is_none();
     let win = match existing {
         Some(w) => w,
         None => WebviewWindowBuilder::new(&app, "buddy", WebviewUrl::App("buddy.html".into()))
@@ -124,13 +125,34 @@ async fn buddy(app: AppHandle, mode: String) -> Result<(), String> {
             .build()
             .map_err(|e| e.to_string())?,
     };
-    win.set_size(LogicalSize::new(size.0, size.1)).map_err(|e| e.to_string())?;
-    // Если открыт плавающий виджет таймера — котик садится над ним.
-    let lift = match app.get_webview_window("overlay") {
-        Some(o) if o.is_visible().unwrap_or(false) => OVERLAY_H,
-        _ => 0.0,
+    // Держим правый нижний угол (самого котика) на месте при смене размера.
+    // Координаты и рабочая область монитора — физические пиксели.
+    let previous = if is_new { None } else {
+        Some((win.outer_position().map_err(|e| e.to_string())?,
+              win.outer_size().map_err(|e| e.to_string())?))
     };
-    dock_bottom_right_sized(&win, Some(size), lift).map_err(|e| e.to_string())?;
+    let monitor = win.current_monitor().map_err(|e| e.to_string())?
+        .or(win.primary_monitor().map_err(|e| e.to_string())?);
+    win.set_size(LogicalSize::new(size.0, size.1)).map_err(|e| e.to_string())?;
+    if is_new {
+        // При первом запуске размещаем над виджетом таймера, если он открыт.
+        let lift = match app.get_webview_window("overlay") {
+            Some(o) if o.is_visible().unwrap_or(false) => OVERLAY_H,
+            _ => 0.0,
+        };
+        dock_bottom_right_sized(&win, Some(size), lift).map_err(|e| e.to_string())?;
+    } else if let (Some((pos, old)), Some(m)) = (previous, monitor) {
+        let area = m.work_area();
+        let width = (size.0 * m.scale_factor()).round() as i64;
+        let height = (size.1 * m.scale_factor()).round() as i64;
+        let left = area.position.x as i64;
+        let top = area.position.y as i64;
+        let right = (left + area.size.width as i64 - width).max(left);
+        let bottom = (top + area.size.height as i64 - height).max(top);
+        let x = (pos.x as i64 + old.width as i64 - width).clamp(left, right);
+        let y = (pos.y as i64 + old.height as i64 - height).clamp(top, bottom);
+        win.set_position(PhysicalPosition::new(x as i32, y as i32)).map_err(|e| e.to_string())?;
+    }
     if !win.is_visible().unwrap_or(false) { win.show().map_err(|e| e.to_string())?; }
     win.set_always_on_top(true).map_err(|e| e.to_string())?;
     Ok(())
