@@ -1,6 +1,5 @@
-# Экспериментально: APK для Android в облаке GitHub (Tauri 2 Mobile). Запуск вручную: Actions → "Build Android APK".
-# Нужно один раз локально выполнить `npm run android:init` и закоммитить папку src-tauri/gen/android.
-name: Build Android APK
+# Экспериментальная debug-сборка; требуется проверка на телефоне.
+name: Build Android APK (experimental)
 on: workflow_dispatch
 
 jobs:
@@ -10,21 +9,30 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: '22'
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
-      - run: sdkmanager "platforms;android-34" "build-tools;34.0.0" "ndk;27.0.12077973"
+        with:
+          packages: 'platform-tools'
+      - run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "ndk;27.0.12077973"
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+          targets: aarch64-linux-android
       - run: npm install
-      - run: npm run android:build
+      - run: npm test
+      - name: Initialise Android project
+        run: npm run android:init -- --ci --skip-targets-install
         env:
-          NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/27.0.12077973
+          NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.12077973
+      - name: Build ARM64 debug APK
+        run: npm run tauri -- android build --debug --apk --target aarch64 --ci
+        env:
+          NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.12077973
       - uses: actions/upload-artifact@v4
         with:
-          name: Focusday-Android
+          name: Focusday-Android-debug-arm64
           path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
