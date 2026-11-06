@@ -99,8 +99,9 @@ fn sync_read(dir: String, name: String) -> Result<Option<String>, String> {
    Отдельное прозрачное окно поверх ВСЕХ программ: пока ты в Word/браузере, котик сидит в углу экрана.
    mode: "hidden" | "small" | "large". Окно не крадёт фокус и не видно в панели задач. */
 #[cfg(desktop)]
+// WebviewWindowBuilder в синхронной команде может зависнуть на Windows/WebView2.
 #[tauri::command]
-fn buddy(app: AppHandle, mode: String) -> Result<(), String> {
+async fn buddy(app: AppHandle, mode: String) -> Result<(), String> {
     let existing = app.get_webview_window("buddy");
     if mode == "hidden" {
         if let Some(w) = existing { w.hide().map_err(|e| e.to_string())?; }

@@ -13,7 +13,7 @@ const seed = (tasks) => ({ version: 2, view: 'today', theme: 'dark', tasks, list
 
 let failed = 0;
 async function step(name, fn) {
-  try { await fn(); console.log('✔', name); } catch (e) { failed++; console.log('✖', name, '\n   ', e.message.split('\n').slice(0, 4).join('\n    ')); }
+  try { await fn(); console.log('✔', name); } catch (e) { failed++; console.log('✖', name, '\n   ', (e.stack || e.message)); }
 }
 async function open(ctx, d) {
   const p = await ctx.newPage(); const errors = [];
@@ -186,7 +186,9 @@ await step('Регрессия: пауза таймера сохраняется
   const p = await open(await browser.newContext(), seed([]));
   await p.click('#focusStartBtn'); await p.waitForTimeout(300); await p.click('#focusStartBtn');
   const stopped = await p.D(); assert.equal(stopped.focusRunning, false);
-  await p.waitForTimeout(1100);
+  await p.waitForTimeout(1100); // пропускаем тик таймера
+  // Фоновые вкладки Chromium могут задержать setTimeout дольше 120 мс.
+  await p.waitForFunction(remaining => { const d = JSON.parse(localStorage.getItem('focusday.data.v1') || '{}'); return !d.focusRunning && d.focusRemainingMs === remaining; }, stopped.focusRemainingMs, { timeout: 10000 });
   const persisted = await p.evaluate(() => JSON.parse(localStorage.getItem('focusday.data.v1')));
   assert.equal(persisted.focusRunning, false); assert.equal(persisted.focusRemainingMs, stopped.focusRemainingMs);
   await p.reload(); await p.waitForFunction(() => window.__FD_TEST__); const after = await p.D();
