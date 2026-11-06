@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0a0b0f">
+  <title>Focusday — дневник задач</title>
+  <link rel="stylesheet" href="focusday.css">
+  <link rel="stylesheet" href="cat.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#07080b">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <script src="focusday-desktop-bridge.js" defer></script>
+  <script src="focusday.js" defer></script>
+</head>
+<body>
+  <!-- ═════════ SVG-иконки: одинаково чёткие на Windows/macOS, без эмодзи ═════════ -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/></symbol>
+      <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10.6 5.1A9.8 9.8 0 0 1 12 5c5 0 9 4.5 10 7a13 13 0 0 1-3 4.1M6.5 6.6A13.4 13.4 0 0 0 2 12c1 2.5 5 7 10 7a9.6 9.6 0 0 0 4.4-1.1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+      <symbol id="i-command" viewBox="0 0 24 24"><path d="M9 6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3Z"/></symbol>
+      <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18a5 5 0 0 1-.6-10A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9Z"/></symbol>
+      <symbol id="i-cat" viewBox="0 0 24 24"><path d="M5 20v-8.5L4 4l4.5 3h7L20 4l-1 7.5V20"/><path d="M5 20h14"/><path d="M9.5 13h.01M14.5 13h.01M11 16.5h2"/></symbol>
+      <symbol id="i-quote" viewBox="0 0 24 24"><path d="M9 7H5v6h4v4l-3 2M19 7h-4v6h4v4l-3 2"/></symbol>
+      <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3 13h5l1.5 3h5L16 13h5"/><path d="M5.5 5h13L21 13v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Z"/></symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+      <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.3 2.8 2.8L16.2 9.6"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></symbol>
+      <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></symbol>
+      <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></symbol>
+      <symbol id="i-sound" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
+      <symbol id="i-widget" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><rect x="11" y="11" width="7" height="7" rx="2"/></symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></symbol>
+      <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+      <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5L8 5.5Z" fill="currentColor"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8.5 5.5v13M15.5 5.5v13"/></symbol>
+      <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7L4 8.5"/><path d="M4 4v4.5h4.5"/></symbol>
+      <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".8" fill="currentColor"/></symbol>
+      <symbol id="i-steps" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3.5 6 1.2 1.2L6.8 5M3.5 12l1.2 1.2 2.1-2.2M4 18h2"/></symbol>
+      <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+      <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7Z"/><path d="M19 15.5c.2 1.6.9 2.3 2.5 2.5-1.6.2-2.3.9-2.5 2.5-.2-1.6-.9-2.3-2.5-2.5 1.6-.2 2.3-.9 2.5-2.5Z"/></symbol>
+      <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2.5 4.5 13.5H12l-1 8 8.5-11H12l1-8Z"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+      <symbol id="i-compress" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16"/><path d="m9 4 3 3 3-3M9 20l3-3 3 3"/></symbol>
+      <symbol id="i-focus" viewBox="0 0 24 24"><path d="M4 9V6a2 2 0 0 1 2-2h3M15 4h3a2 2 0 0 1 2 2v3M20 15v3a2 2 0 0 1-2 2h-3M9 20H6a2 2 0 0 1-2-2v-3"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 20V9M7 13.5l5-5 5 5M5 4h14"/></symbol>
+      <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="18.5" cy="12" r="1.3" fill="currentColor"/></symbol>
+      <symbol id="i-layout" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="6.5" rx="2"/><rect x="3.5" y="13.5" width="17" height="6.5" rx="2"/></symbol>
+      <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M17 3l3 3-3 3"/><path d="M4 12V9a3 3 0 0 1 3-3h13M7 21l-3-3 3-3"/><path d="M20 12v3a3 3 0 0 1-3 3H4"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6L12 3Z"/><path d="m9 12 2 2 4-4"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></symbol>
+      <symbol id="i-sync" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 20v-4h-4"/></symbol>
+      <symbol id="i-history" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.5"/><path d="M3.5 4v4.5H8M12 8v4.2l2.8 1.8"/></symbol>
+      <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 21c-3.9 0-6.5-2.6-6.5-6.2 0-3.4 2.6-5.3 3.6-8.8 2.6 1.4 3.4 3.7 3.4 5.3 1-.6 1.6-1.8 1.7-3.1 2 1.6 4.3 4 4.3 6.8 0 3.5-2.6 6-6.5 6Z"/></symbol>
+      <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="6.5" cy="17.5" r="2.5"/><path d="M8.6 8 20 18M8.6 16 20 6"/></symbol>
+      <symbol id="i-battery" viewBox="0 0 24 24"><rect x="3" y="7.5" width="16" height="9" rx="2.5"/><path d="M21.5 10.5v3M6.5 10.5v3"/></symbol>
+      <symbol id="i-coffee" viewBox="0 0 24 24"><path d="M4.5 9h12v5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5V9Z"/><path d="M16.5 10.5h1.5a2.5 2.5 0 0 1 0 5h-1.6M8 3.5v2.5M11 3.5v2.5M14 3.5v2.5"/></symbol>
+      <symbol id="i-feather" viewBox="0 0 24 24"><path d="M20 4c-7 0-12 4.5-12 11v5"/><path d="M8 15c5 0 9.5-3.5 10.5-8M8 11h6"/></symbol>
+      <symbol id="i-brain" viewBox="0 0 24 24"><path d="M9 4.5a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1V6a2 2 0 0 0-3-1.5ZM15 4.5a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1"/></symbol>
+      <symbol id="i-crown" viewBox="0 0 24 24"><path d="M4 18h16M4.5 15 3 7l5 3.5L12 5l4 5.5L21 7l-1.5 8h-15Z"/></symbol>
+      <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9L12 3.5Z"/></symbol>
+      <symbol id="i-wave" viewBox="0 0 24 24"><path d="M3 12h2.5l2-5 3 10 3-13 3 11 2-3H21"/></symbol>
+      <symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5" fill="currentColor"/><circle cx="12" cy="12" r="8"/></symbol>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19.5V11Z"/><path d="M9.5 21v-6h5v6"/></symbol>
+      <symbol id="i-hundred" viewBox="0 0 24 24"><path d="M4 8.5 6 7v10M10.5 7a2.5 5 0 1 1 0 10 2.5 5 0 0 1 0-10ZM17.5 7a2.5 5 0 1 1 0 10 2.5 5 0 0 1 0-10Z"/></symbol>
+      <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 15-14-1 10-6 15-14 15"/><path d="M5 19 13 11"/></symbol>
+      <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v3"/><rect x="4" y="8" width="16.5" height="11" rx="2.5"/><circle cx="16" cy="13.5" r="1.2" fill="currentColor"/></symbol>
+      <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M7 3.5h10M7 20.5h10M8 3.5c0 4 8 5 8 8.5s-8 4.5-8 8.5M16 3.5c0 4-8 5-8 8.5s8 4.5 8 8.5"/></symbol>
+      <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M14.5 5.5 18 9l-8.5 8.5H6V14l8.5-8.5Z"/></symbol>
+      <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.4-7.5-10A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 7.5 3c0 5.6-7.5 10-7.5 10Z"/></symbol>
+      <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    </defs>
+  </svg>
+
+  <!-- Дофаминовая полоса прогресса дня (ADHD) -->
+  <div class="dopamine" id="dopamineBar" role="progressbar" aria-label="Прогресс дня" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Боковая панель">
+      <button type="button" class="brand" data-view="today" aria-label="Focusday — на сегодня">
+        <span class="brand-mark"><svg><use href="#i-spark"/></svg></span>
+        <span class="brand-text">focusday<span class="brand-dot">.</span><small>личный ритм, не гонка</small></span>
+      </button>
+
+      <div class="side-label">Пространство</div>
+      <nav class="main-nav" aria-label="Основная навигация">
+        <button type="button" class="nav-item active" data-view="today"><svg class="ic"><use href="#i-sun"/></svg><span class="nav-text">Сегодня</span><kbd>1</kbd></button>
+        <button type="button" class="nav-item" data-view="inbox"><svg class="ic"><use href="#i-inbox"/></svg><span class="nav-text">Входящие</span><span class="nav-count" id="inboxCount">0</span></button>
+        <button type="button" class="nav-item" data-view="upcoming"><svg class="ic"><use href="#i-calendar"/></svg><span class="nav-text">План</span><kbd>3</kbd></button>
+        <button type="button" class="nav-item" data-view="done"><svg class="ic"><use href="#i-check-circle"/></svg><span class="nav-text">Сделано</span><kbd>4</kbd></button>
+      </nav>
+
+      <div class="side-label">Для себя</div>
+      <nav class="main-nav life-nav" aria-label="Привычки, финансы, мысли">
+        <button type="button" class="nav-item" data-view="habits"><svg class="ic"><use href="#i-leaf"/></svg><span class="nav-text">Привычки</span><span class="nav-count" id="habitNavCount">0</span></button>
+        <button type="button" class="nav-item" data-view="money"><svg class="ic"><use href="#i-wallet"/></svg><span class="nav-text">Финансы</span><span class="nav-count" id="moneyNavCount">—</span></button>
+        <button type="button" class="nav-item" data-view="journal"><svg class="ic"><use href="#i-pen"/></svg><span class="nav-text">Мысли</span><span class="nav-count" id="journalNavCount">0</span></button>
+      </nav>
+
+      <div class="side-label side-label-row">Мои списки <button type="button" id="addListBtn" class="tiny-icon" title="Добавить список" aria-label="Добавить список"><svg><use href="#i-plus"/></svg></button></div>
+      <div id="listNav" class="list-nav"></div>
+
+      <div class="sidebar-bottom">
+        <button type="button" class="level-card" id="levelCard" aria-label="Уровень и достижения">
+          <span class="level-ring" id="levelRing"><b id="levelNum">1</b></span>
+          <span class="level-info"><strong id="levelTitle">Искра</strong><small id="levelXp">0 / 60 XP</small><span class="xp-track"><i id="xpBar"></i></span></span>
+        </button>
+        <div class="streak-card"><div class="streak-icon"><svg><use href="#i-bolt"/></svg></div><div><strong id="streakTitle">Каждый шаг считается</strong><p id="streakText">Начни с одной маленькой задачи</p></div></div>
+        <button type="button" class="nav-item" id="achievementsBtn"><svg class="ic"><use href="#i-trophy"/></svg><span class="nav-text">Достижения</span><span class="nav-count" id="achievementCount">0</span></button>
+        <button type="button" class="nav-item" id="settingsBtn"><svg class="ic"><use href="#i-gear"/></svg><span class="nav-text">Настройки и данные</span></button>
+        <div class="profile-row"><div class="avatar">F</div><div><strong>Мой дневник</strong><small>Локально на этом устройстве</small></div><span class="status-dot" aria-hidden="true"></span></div>
+      </div>
+    </aside>
+    <div class="sidebar-scrim" id="sidebarScrim" hidden></div>
+
+    <main class="main-area">
+      <header class="topbar">
+        <button type="button" class="icon-btn mobile-menu" id="mobileMenu" aria-label="Открыть меню" aria-controls="sidebar"><svg><use href="#i-menu"/></svg></button>
+        <div class="breadcrumb"><span>Мой дневник</span><span class="crumb-slash">/</span><strong id="viewBreadcrumb">Сегодня</strong></div>
+        <div class="top-actions">
+          <label class="search-box"><svg class="ic"><use href="#i-search"/></svg><span class="sr-only">Поиск задач</span><input id="searchInput" type="search" placeholder="Найти задачу…" autocomplete="off"><kbd>/</kbd></label>
+          <button type="button" id="paletteBtn" class="icon-btn" title="Палитра команд (Ctrl K)" aria-label="Палитра команд"><svg><use href="#i-command"/></svg></button>
+          <div class="seg" role="group" aria-label="Режимы">
+            <button type="button" id="lowEnergyBtn" class="icon-btn" title="Бережный режим (L)" aria-label="Бережный режим" aria-pressed="false"><svg><use href="#i-battery"/></svg></button>
+            <button type="button" id="compressBtn" class="icon-btn" title="Сжатый режим (C)" aria-label="Сжатый режим" aria-pressed="false"><svg><use href="#i-compress"/></svg></button>
+            <button type="button" id="focusModeBtn" class="icon-btn" title="Режим фокуса (F)" aria-label="Режим фокуса" aria-pressed="false"><svg><use href="#i-focus"/></svg></button>
+          </div>
+          <button type="button" id="overlayBtn" class="icon-btn" title="Плавающий виджет" aria-label="Открыть плавающий виджет"><svg><use href="#i-widget"/></svg></button>
+          <button type="button" id="soundBtn" class="icon-btn" title="Отключить звуки" aria-label="Звуки интерфейса" aria-pressed="true"><svg><use href="#i-sound"/></svg></button>
+          <button type="button" id="themeBtn" class="icon-btn" title="Переключить тему" aria-label="Переключить тему"><svg class="theme-sun"><use href="#i-sun"/></svg><svg class="theme-moon"><use href="#i-moon"/></svg></button>
+          <button type="button" id="topAddBtn" class="top-add"><svg><use href="#i-plus"/></svg><span>Новая задача</span></button>
+        </div>
+      </header>
+
+      <div class="content-wrap">
+        <section class="greeting-row">
+          <div>
+            <div class="eyebrow" id="dateEyebrow">Твой день · понедельник</div>
+            <h1 id="pageTitle">Сегодня — твой темп.</h1>
+            <p class="page-subtitle" id="pageSubtitle">Не нужно делать всё. Достаточно начать с чего-то одного.</p>
+          </div>
+          <div class="date-pill"><span class="date-pill-dot"></span><span id="todayDateLabel"></span></div>
+        </section>
+
+        <!-- Быстрый захват: «позвонить маме завтра 15м !» -->
+        <form class="quick-capture" id="quickCapture" autocomplete="off">
+          <svg class="ic"><use href="#i-bolt"/></svg>
+          <label for="quickCaptureInput" class="sr-only">Быстро добавить задачу</label>
+          <input id="quickCaptureInput" maxlength="200" placeholder="Задача · @привычка · -$5 кофе · ?$80 хотелка · !мысль" aria-describedby="qcPreview">
+          <span class="qc-preview" id="qcPreview" aria-live="polite"></span>
+          <kbd>Q</kbd>
+          <button type="submit" class="qc-submit" aria-label="Добавить"><svg><use href="#i-plus"/></svg></button>
+        </form>
+
+        <section class="week-strip glass" aria-label="Календарь на две недели">
+          <div class="week-strip-head">
+            <div><strong>Твой календарь</strong><span> · две недели</span></div>
+            <div class="calendar-controls">
+              <button type="button" id="prevWeek" class="tiny-icon" aria-label="Предыдущие две недели"><svg><use href="#i-left"/></svg></button>
+              <button type="button" id="goToday" class="today-link">Сегодня</button>
+              <button type="button" id="nextWeek" class="tiny-icon" aria-label="Следующие две недели"><svg><use href="#i-right"/></svg></button>
+            </div>
+          </div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+        </section>
+
+        <section class="overview-grid">
+          <article class="overview-card glass progress-card">
+            <div class="overview-top"><span>Прогресс дня</span><svg class="ic"><use href="#i-spark"/></svg></div>
+            <div class="progress-main">
+              <div><strong id="progressPercent">0<span>%</span></strong><p id="progressCaption">Каждый маленький шаг важен</p></div>
+              <div class="ring" id="progressRing"><div class="ring-inner"><span id="progressDone">0/0</span><small>задач</small></div></div>
+            </div>
+            <div class="progress-track"><span id="progressBar"></span></div>
+          </article>
+          <article class="overview-card glass focus-stat">
+            <div class="overview-top"><span>Время фокуса</span><svg class="ic"><use href="#i-clock"/></svg></div>
+            <strong class="stat-big" id="focusTotal">00:00</strong>
+            <p>Сегодня ты уделил себе время</p>
+            <div class="focus-foot"><span class="mint-dot"></span><span id="focusSessions">Начни первую сессию</span></div>
+          </article>
+          <article class="overview-card glass energy-stat">
+            <div class="overview-top"><span>Твоя энергия</span><svg class="ic"><use href="#i-bolt"/></svg></div>
+            <strong class="stat-big" id="energyLabel">Спокойный режим</strong>
+            <p>Подстрой план под себя, а не наоборот.</p>
+            <div class="energy-picks" id="energyPicks" role="group" aria-label="Уровень энергии">
+              <button type="button" data-energy="1" title="Мало сил" aria-label="Мало сил"></button>
+              <button type="button" data-energy="2" title="Немного сил" aria-label="Немного сил"></button>
+              <button type="button" data-energy="3" title="Нормально" aria-label="Нормально"></button>
+              <button type="button" data-energy="4" title="Много сил" aria-label="Много сил"></button>
+              <button type="button" data-energy="5" title="Полон энергии" aria-label="Полон энергии"></button>
+            </div>
+          </article>
+        </section>
+
+        <section class="activity-panel glass" aria-labelledby="activityTitle">
+          <div class="activity-head">
+            <div><span class="eyebrow">Твой ритм</span><h2 id="activityTitle">Активность за 7 дней</h2></div>
+            <span class="activity-total" id="activityTotal">0 задач</span>
+          </div>
+          <div class="activity-chart" id="activityChart" role="img" aria-label="Количество выполненных задач за последние семь дней"></div>
+          <div class="heatmap-wrap">
+            <div class="heatmap-head"><span>Тепловая карта · год</span><span id="heatmapSummary">0 активных дней из 30</span></div>
+            <div class="heatmap" id="heatmap" role="img" aria-label="Тепловая карта активности"></div>
+            <div class="heatmap-legend"><span>меньше</span><i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><span>больше</span></div>
+          </div>
+        </section>
+
+        <section class="work-layout">
+          <div class="tasks-column">
+            <div class="low-banner" id="lowBanner" hidden><svg class="ic"><use href="#i-heart"/></svg><span id="lowBannerText">Бережный режим: показаны 3 самые лёгкие задачи.</span><button type="button" id="lowShowAll">Показать все</button></div>
+            <div class="soft-plan" id="softPlan" hidden><svg class="ic"><use href="#i-moon"/></svg><span id="softPlanText"></span><button type="button" id="softPlanBtn">Мягкий перенос на завтра</button></div>
+            <section class="life-page" id="lifePage" hidden></section>
+            <div class="section-head">
+              <div>
+                <div class="eyebrow" id="taskSectionEyebrow">Твой список</div>
+                <h2 class="section-title"><span id="taskSectionTitle">На сегодня</span> <span class="count-badge" id="taskCountBadge">0</span></h2>
+              </div>
+              <div class="task-toolbar">
+                <select id="sortSelect" class="select" aria-label="Сортировка">
+                  <option value="smart">Умный порядок</option>
+                  <option value="priority">По приоритету</option>
+                  <option value="created">Сначала новые</option>
+                  <option value="duration">По времени</option>
+                </select>
+                <button type="button" class="icon-btn" id="viewToggle" title="Компактный вид" aria-label="Компактный вид" aria-pressed="false"><svg><use href="#i-layout"/></svg></button>
+              </div>
+            </div>
+            <div class="filter-pills" id="filterPills" role="group" aria-label="Фильтр">
+              <button type="button" class="filter-pill active" data-filter="all">Все <span id="filterAllCount">0</span></button>
+              <button type="button" class="filter-pill" data-filter="todo">К выполнению</button>
+              <button type="button" class="filter-pill" data-filter="inprogress">В процессе</button>
+              <button type="button" class="filter-pill" data-filter="done">Готово</button>
+            </div>
+            <div id="taskList" class="task-list" aria-live="polite"></div>
+            <button type="button" class="add-task-inline" id="inlineAddBtn"><svg><use href="#i-plus"/></svg> Добавить задачу <kbd>N</kbd></button>
+          </div>
+
+          <aside class="right-rail">
+            <section class="focus-card glass" id="focusCard">
+              <div class="focus-card-head">
+                <div><span class="focus-kicker"><i></i> Фокус-зона</span><h3 id="focusHeading">Время начать</h3></div>
+                <button type="button" id="focusMoreBtn" class="tiny-icon" title="Выйти из режима фокуса / сбросить" aria-label="Сбросить таймер"><svg><use href="#i-more"/></svg></button>
+              </div>
+              <p class="focus-task-title" id="focusTaskTitle">Выбери задачу и дай себе 10 минут.</p>
+              <p class="focus-next-step" id="focusNextStep" hidden></p>
+              <div class="timer-face">
+                <div class="timer-progress" id="timerProgress">
+                  <div class="timer-center"><strong id="timerDisplay">10:00</strong><span id="timerModeLabel">Мини-спринт</span><em id="timerEndsAt"></em></div>
+                </div>
+              </div>
+              <div class="timer-presets" id="timerPresets" role="group" aria-label="Длительность">
+                <button type="button" data-minutes="10" class="selected">10 мин</button>
+                <button type="button" data-minutes="25">25 мин</button>
+                <button type="button" data-minutes="45">45 мин</button>
+              </div>
+              <div class="focus-buttons">
+                <button type="button" class="focus-start" id="focusStartBtn">Начать фокус</button>
+                <button type="button" class="focus-reset" id="focusResetBtn" title="Сбросить таймер" aria-label="Сбросить таймер"><svg><use href="#i-reset"/></svg></button>
+              </div>
+              <div class="ambient" id="ambientBox">
+                <div class="amb-row">
+                  <button type="button" class="amb-toggle" id="ambToggle" aria-pressed="false" title="Фоновый звук: включить / выключить"><span class="amb-emoji" id="ambEmoji" aria-hidden="true">🌧️</span><span id="ambName">Фон: Дождь</span><i class="amb-eq" aria-hidden="true"><b></b><b></b><b></b></i></button>
+                  <button type="button" class="tiny-icon" id="ambMore" aria-expanded="false" aria-controls="ambPanel" title="Библиотека звуков"><svg><use href="#i-chevron-down"/></svg></button>
+                </div>
+                <div class="amb-panel" id="ambPanel" hidden>
+                  <div class="amb-grid" id="ambGrid" role="group" aria-label="Библиотека звуков"></div>
+                  <label class="amb-vol"><svg class="ic"><use href="#i-sound"/></svg><span class="sr-only">Громкость</span><input type="range" id="ambVol" min="0" max="100" step="1" value="45"></label>
+                  <button type="button" class="switch-row" id="ambWithFocus" aria-pressed="true"><span>Включать вместе с фокусом, затухать в конце</span><i class="switch" aria-hidden="true"></i></button>
+                </div>
+              </div>
+              <div class="focus-note"><svg class="ic"><use href="#i-spark"/></svg><span>Не нужно ждать мотивации. Просто начни.</span></div>
+            </section>
+            <section class="life-card glass" id="lifeCard">
+              <div class="rail-heading"><h3>Для себя</h3><button type="button" class="tiny-icon" id="lifeCollapse" aria-label="Свернуть" aria-expanded="true"><svg><use href="#i-chevron-down"/></svg></button></div>
+              <div class="life-body">
+                <div class="lw-habits" id="lwHabits"></div>
+                <button type="button" class="lw-row" data-goto="money" id="lwMoney"></button>
+                <button type="button" class="lw-row" data-goto="journal" id="lwJournal"></button>
+              </div>
+            </section>
+            <section class="next-card glass">
+              <div class="rail-heading"><h3>Самый маленький шаг</h3><svg class="ic"><use href="#i-spark"/></svg></div>
+              <p>Когда задача кажется огромной, уменьши её до действия на 2 минуты.</p>
+              <button type="button" id="tinyStepBtn" class="tiny-step-button">Помоги начать <svg><use href="#i-right"/></svg></button>
+            </section>
+            <section class="quote-card glass" aria-live="polite"><span class="quote-mark" aria-hidden="true">“</span><p id="dailyQuote">«Прогресс — это не идеальный день. Это возвращение к тому, что важно.»</p><span class="quote-author" id="quoteAuthor"><b>Focusday</b> · Напоминание себе</span>
+              <div class="quote-actions"><button type="button" class="tiny-icon" id="quoteNext" title="Другая цитата" aria-label="Другая цитата"><svg><use href="#i-repeat"/></svg></button><button type="button" class="tiny-icon" id="quoteHide" title="Больше не показывать эту" aria-label="Больше не показывать эту цитату"><svg><use href="#i-eye-off"/></svg></button></div></section>
+          </aside>
+        </section>
+
+        <footer class="app-footer">
+          <span><i class="status-dot"></i> Всё сохраняется автоматически</span>
+          <span id="storageStatus">Твои задачи остаются на этом устройстве</span>
+          <button type="button" id="exportQuickBtn">Экспорт данных <svg><use href="#i-download"/></svg></button>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <button type="button" id="focusExitBtn" class="focus-exit" hidden>Выйти из фокуса <kbd>Esc</kbd></button>
+  <button type="button" id="fabAddBtn" class="fab-button" aria-label="Новая задача" title="Новая задача"><svg><use href="#i-plus"/></svg></button>
+  <div class="ach-layer" id="achLayer" aria-live="polite"></div>
+  <div class="levelup" id="levelUp" hidden></div>
+  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
+  <div class="cat-buddy" id="catBuddy" hidden></div>
+
+  <!-- ═════════ Модальные окна ═════════ -->
+  <div class="modal-backdrop" id="taskModal" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <header class="modal-head"><div><span class="eyebrow">Маленький шаг — уже шаг</span><h2 id="modalTitle">Добавить задачу</h2></div><button type="button" class="icon-btn" data-close-modal aria-label="Закрыть"><svg><use href="#i-x"/></svg></button></header>
+      <form id="taskForm" class="modal-body">
+        <input type="hidden" id="editTaskId">
+        <label class="field-label" for="taskTitleInput">Что нужно сделать? <span class="req">*</span></label>
+        <input id="taskTitleInput" class="text-field title-field" maxlength="120" placeholder="Например, открыть документ и начать…" required autocomplete="off">
+        <label class="field-label" for="taskDescriptionInput">Заметки <span class="optional">необязательно</span></label>
+        <textarea id="taskDescriptionInput" class="text-field" rows="3" maxlength="1000" placeholder="Любые мысли, детали или ссылки"></textarea>
+        <div class="form-grid">
+          <div><label class="field-label" for="taskDateInput">Когда</label><input id="taskDateInput" class="text-field" type="date"></div>
+          <div><label class="field-label" for="taskDurationInput">Сколько времени</label>
+            <select id="taskDurationInput" class="text-field"><option value="5">5 минут</option><option value="10">10 минут</option><option value="15">15 минут</option><option value="25" selected>25 минут</option><option value="45">45 минут</option><option value="60">1 час</option><option value="90">1,5 часа</option></select></div>
+        </div>
+        <div class="form-grid three">
+          <div><label class="field-label" for="taskRecurrenceInput">Повторение</label><select id="taskRecurrenceInput" class="text-field"><option value="none">Не повторять</option><option value="daily">Каждый день</option></select></div>
+          <div><label class="field-label" for="taskPriorityInput">Приоритет</label><select id="taskPriorityInput" class="text-field"><option value="1">Низкий</option><option value="2" selected>Обычный</option><option value="3">Высокий</option></select></div>
+          <div><label class="field-label" for="taskListInput">Список</label><select id="taskListInput" class="text-field"><option value="inbox">Входящие</option></select></div>
+        </div>
+        <div class="micro-builder">
+          <div class="micro-builder-head"><div><strong>Разбить на микро-шаги</strong><small>Необязательно · помогает начать</small></div><button type="button" id="suggestStepsBtn" class="subtle-button"><svg><use href="#i-spark"/></svg> Подсказать</button></div>
+          <div id="stepEditor"></div>
+          <div class="step-add-row"><label for="newStepInput" class="sr-only">Новый микро-шаг</label><input id="newStepInput" class="text-field" placeholder="Первое действие на 2 минуты…"><button type="button" id="addStepBtn" class="icon-btn" aria-label="Добавить шаг"><svg><use href="#i-plus"/></svg></button></div>
+        </div>
+        <div class="modal-actions"><button type="button" class="secondary-btn" data-close-modal>Отмена</button><button type="submit" class="primary-btn"><svg><use href="#i-check"/></svg> Сохранить задачу</button></div>
+      </form>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="importModal" hidden>
+    <section class="modal small-modal" role="dialog" aria-modal="true" aria-labelledby="importTitle">
+      <header class="modal-head"><div><span class="eyebrow">Безопасное восстановление</span><h2 id="importTitle">Импорт бэкапа</h2></div><button type="button" class="icon-btn" data-close-modal aria-label="Закрыть"><svg><use href="#i-x"/></svg></button></header>
+      <div class="modal-body">
+        <div class="import-meta" id="importMeta"></div>
+        <div class="import-stats" id="importStats"></div>
+        <p class="settings-copy"><svg class="ic"><use href="#i-shield"/></svg> Перед импортом автоматически создаётся точка восстановления. ID задач сохраняются — дубликатов не будет.</p>
+      </div>
+      <div class="modal-actions"><button type="button" class="danger-btn" id="importReplaceBtn">Заменить всё</button><button type="button" class="primary-btn" id="importMergeBtn">Объединить (рекомендуется)</button></div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="settingsModal" hidden>
+    <section class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <header class="modal-head"><div><span class="eyebrow">Твои данные — под твоим контролем</span><h2 id="settingsTitle">Настройки и данные</h2></div><button type="button" class="icon-btn" data-close-modal aria-label="Закрыть"><svg><use href="#i-x"/></svg></button></header>
+      <div class="modal-body">
+        <p class="settings-copy">Данные хранятся локально на этом устройстве. Экспортируй резервную копию, чтобы перенести дневник на другой компьютер.</p>
+        <div class="sound-setting"><div><strong>Звуки интерфейса</strong><small>Мягкие сигналы при действиях и запуске фокуса</small></div><button id="soundSettingsBtn" class="secondary-btn" type="button" aria-pressed="true">Звук включён</button></div>
+        <details class="set-group" id="buddyGroup">
+          <summary><svg class="ic"><use href="#i-cat"/></svg><span><strong>Котик-напарник</strong><small>Сидит рядом во время фокуса. Будит, если ты пропал</small></span></summary>
+          <button type="button" class="switch-row" id="buddyEnabled" aria-pressed="true"><span>Котик-напарник в углу во время фокуса</span><i class="switch" aria-hidden="true"></i></button>
+          <button type="button" class="switch-row" id="buddyNudge" aria-pressed="true"><span>Котик-напоминалка при неактивности (Idle 15–20 мин)</span><i class="switch" aria-hidden="true"></i></button>
+          <label class="set-line">Будить, если нет мыши и клавиатуры<select id="buddyIdleMin" class="select"><option value="10">10 минут</option><option value="15" selected>15 минут</option><option value="20">20 минут</option><option value="30">30 минут</option></select></label>
+          <small class="set-note" id="buddyStatus"></small>
+          <button type="button" class="secondary-btn" id="buddyAllowWeb" hidden>Разрешить детектор простоя (Chrome / Edge)</button>
+        </details>
+        <details class="set-group" id="quoteGroup">
+          <summary><svg class="ic"><use href="#i-quote"/></svg><span><strong>Цитаты</strong><small id="quoteInfo">Фильтр, скрытые, свои базы JSON</small></span></summary>
+          <div class="chip-row" id="quoteCats" role="group" aria-label="Категории цитат"></div>
+          <button type="button" class="switch-row" id="quoteDeep" aria-pressed="false"><span>Показывать грустные и мрачные</span><i class="switch" aria-hidden="true"></i></button>
+          <div class="set-buttons"><label class="secondary-btn import-label"><svg><use href="#i-upload"/></svg> Загрузить JSON с цитатами<input id="quoteImport" type="file" accept="application/json,.json" hidden></label><button type="button" class="secondary-btn" id="quoteUnhide" hidden>Вернуть скрытые</button></div>
+          <small class="set-note">Формат: <code>[{"text":"…","author":"…","source":"…","tone":"gentle|drive|deep"}]</code> или просто массив строк.</small>
+        </details>
+        <details class="set-group" id="syncGroup">
+          <summary><svg class="ic"><use href="#i-sync"/></svg><span><strong>Синхронизация ПК ⇄ телефон</strong><small id="syncStatus">Сквозное шифрование. Сервер видит только шифротекст</small></span></summary>
+          <label class="set-line col">Пароль синхронизации (одинаковый на всех устройствах, от 10 символов)<input id="vaultPass" class="text-field" type="password" autocomplete="new-password" minlength="10" placeholder="Не хранится и не отправляется"></label>
+          <div class="sync-card"><div><strong><svg class="ic"><use href="#i-history"/></svg> Папка</strong><small>Google Drive · OneDrive · iCloud · Dropbox — <span id="folderInfo">не выбрана</span></small></div><button type="button" id="folderPickBtn" class="secondary-btn">Выбрать</button></div>
+          <div class="sync-card col"><div><strong><svg class="ic"><use href="#i-cloud"/></svg> Облако Supabase</strong><small id="cloudInfo">не подключено</small></div>
+            <div class="cloud-grid"><input id="cloudUrl" class="text-field" placeholder="https://xxxx.supabase.co" autocomplete="off"><input id="cloudAnon" class="text-field" placeholder="anon public key" autocomplete="off"><input id="cloudEmail" class="text-field" type="email" placeholder="e-mail" autocomplete="username"><input id="cloudPassword" class="text-field" type="password" placeholder="пароль аккаунта" autocomplete="current-password"></div>
+            <div class="set-buttons"><button type="button" id="cloudLoginBtn" class="secondary-btn">Войти</button><button type="button" id="cloudSignupBtn" class="secondary-btn">Создать аккаунт</button></div></div>
+          <div class="set-buttons"><button type="button" id="syncNowBtn" class="primary-btn"><svg><use href="#i-sync"/></svg> Синхронизировать сейчас</button><button type="button" id="syncOffBtn" class="secondary-btn">Отключить</button></div>
+          <small class="set-note">Забудешь пароль — облачную копию не расшифрует никто (даже мы). Данные на устройстве при этом останутся.</small>
+        </details>
+        <div class="settings-actions">
+          <button type="button" id="exportBtn" class="primary-btn"><svg><use href="#i-download"/></svg> Экспортировать бэкап (.json)</button>
+          <button type="button" id="exportEncBtn" class="secondary-btn"><svg><use href="#i-lock"/></svg> Зашифрованный бэкап (.fdbak)</button>
+          <label class="secondary-btn import-label"><svg><use href="#i-upload"/></svg> Импортировать бэкап<input id="importInput" type="file" accept="application/json,.json,.fdbak" hidden></label>
+          <div class="restore-row"><svg class="ic"><use href="#i-history"/></svg><select id="snapshotSelect" class="select" aria-label="Точка восстановления"><option value="">Точки восстановления…</option></select><button type="button" id="snapshotRestoreBtn" class="secondary-btn">Откатить</button></div>
+          <button type="button" id="clearDoneBtn" class="secondary-btn">Очистить завершённые задачи</button>
+          <button type="button" id="resetAllBtn" class="danger-btn">Удалить все данные…</button>
+        </div>
+        <div class="settings-foot"><span id="taskDataCount">0 задач</span><span>Focusday · работает офлайн</span></div>
+      </div>
+      <div class="modal-actions"><button type="button" class="secondary-btn" data-close-modal>Готово</button></div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="quickModal" hidden>
+    <section class="modal quick-modal" role="dialog" aria-modal="true" aria-labelledby="quickTitle">
+      <header class="modal-head"><div><span class="eyebrow">Снизь планку</span><h2 id="quickTitle">Начни с двух минут</h2></div><button type="button" class="icon-btn" data-close-modal aria-label="Закрыть"><svg><use href="#i-x"/></svg></button></header>
+      <div class="modal-body">
+        <p class="quick-copy">Не пытайся закончить задачу. Нужно только сделать первый физический шаг.</p>
+        <div id="quickTaskChoices" class="quick-choices"></div>
+      </div>
+      <div class="modal-actions"><button type="button" class="secondary-btn full-btn" data-close-modal>Я пока просто подумаю</button></div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="listModal" hidden>
+    <section class="modal small-modal" role="dialog" aria-modal="true" aria-labelledby="listModalTitle">
+      <header class="modal-head"><div><span class="eyebrow">Организуй без сложностей</span><h2 id="listModalTitle">Новый список</h2></div><button type="button" class="icon-btn" data-close-modal aria-label="Закрыть"><svg><use href="#i-x"/></svg></button></header>
+      <form id="listForm" class="modal-body">
+        <label class="field-label" for="listNameInput">Название списка</label>
+        <input id="listNameInput" class="text-field" maxlength="30" required placeholder="Например, Проект мечты">
+        <span class="field-label">Цвет списка</span>
+        <div class="list-color-picker">
+          <input id="listColorInput" type="color" value="#a78bfa" aria-label="Выбрать свой цвет">
+          <div class="color-swatches">
+            <button type="button" class="color-swatch selected" data-color="#a78bfa" style="--swatch:#a78bfa" aria-label="Лавандовый"></button>
+            <button type="button" class="color-swatch" data-color="#7fe0bd" style="--swatch:#7fe0bd" aria-label="Мятный"></button>
+            <button type="button" class="color-swatch" data-color="#f6bd79" style="--swatch:#f6bd79" aria-label="Янтарный"></button>
+            <button type="button" class="color-swatch" data-color="#ff8e9b" style="--swatch:#ff8e9b" aria-label="Розовый"></button>
+            <button type="button" class="color-swatch" data-color="#80b9ff" style="--swatch:#80b9ff" aria-label="Небесный"></button>
+            <button type="button" class="color-swatch" data-color="#e7a7e8" style="--swatch:#e7a7e8" aria-label="Орхидея"></button>
+            <button type="button" class="color-swatch" data-color="#5eead4" style="--swatch:#5eead4" aria-label="Бирюзовый"></button>
+            <button type="button" class="color-swatch" data-color="#fb7185" style="--swatch:#fb7185" aria-label="Коралловый"></button>
+            <button type="button" class="color-swatch" data-color="#facc15" style="--swatch:#facc15" aria-label="Жёлтый"></button>
+            <button type="button" class="color-swatch" data-color="#818cf8" style="--swatch:#818cf8" aria-label="Индиго"></button>
+          </div>
+        </div>
+        <div class="modal-actions"><button type="button" class="secondary-btn" data-close-modal>Отмена</button><button class="primary-btn" type="submit">Создать список</button></div>
+      </form>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="achievementsModal" hidden>
+    <section class="modal small-modal" role="dialog" aria-modal="true" aria-labelledby="achievementsTitle">
+      <header class="modal-head"><div><span class="eyebrow">Замечай свой прогресс</span><h2 id="achievementsTitle">Достижения</h2></div><button type="button" class="icon-btn" data-close-modal aria-label="Закрыть"><svg><use href="#i-x"/></svg></button></header>
+      <div class="modal-body"><div class="ach-summary" id="achSummary"></div><div class="achievement-grid" id="achievementGrid"></div></div>
+      <div class="modal-actions"><button type="button" class="primary-btn" data-close-modal>Продолжить</button></div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop palette-backdrop" id="paletteModal" hidden>
+    <section class="modal palette" role="dialog" aria-modal="true" aria-label="Палитра команд">
+      <div class="pal-search"><svg class="ic"><use href="#i-command"/></svg><input id="paletteInput" role="combobox" aria-expanded="true" aria-controls="paletteList" aria-autocomplete="list" autocomplete="off" placeholder="Команда, задача, привычка… или @вода, -$5 кофе, !мысль"><kbd>Esc</kbd></div>
+      <ul class="pal-list" id="paletteList" role="listbox" aria-label="Результаты"></ul>
+      <footer class="pal-foot"><span><kbd>↑</kbd><kbd>↓</kbd> выбрать</span><span><kbd>Enter</kbd> выполнить</span><span><kbd>Shift Enter</kbd> фокус на задаче</span></footer>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="shortcutsModal" hidden>
+    <section class="modal small-modal shortcuts-modal" role="dialog" aria-modal="true" aria-labelledby="shortcutsTitle">
+      <header class="modal-head"><div><span class="eyebrow">Быстрые действия</span><h2 id="shortcutsTitle">Горячие клавиши</h2></div><button type="button" class="icon-btn" data-close-modal aria-label="Закрыть"><svg><use href="#i-x"/></svg></button></header>
+      <div class="modal-body shortcut-list">
+        <div><span>Создать задачу (полная форма)</span><kbd>N</kbd></div>
+        <div><span>Универсальный ввод: задача / @привычка / -$расход / ?$хотелка / !мысль</span><kbd>Q</kbd></div>
+        <div><span>Привычки · Финансы · Мысли</span><kbd>5–7</kbd></div>
+        <div><span>Бережный режим (Low-Energy)</span><kbd>L</kbd></div>
+        <div><span>Глобально из любой программы (EXE)</span><kbd>Ctrl Alt Space</kbd></div>
+        <div><span>Старт / пауза фокуса</span><kbd>Space</kbd></div>
+        <div><span>Режим фокуса</span><kbd>F</kbd></div>
+        <div><span>Сжатый режим</span><kbd>C</kbd></div>
+        <div><span>Сегодня · Входящие · План · Сделано</span><kbd>1–4</kbd></div>
+        <div><span>Палитра команд: поиск и действия</span><kbd>Ctrl K</kbd></div>
+        <div><span>Поиск по задачам</span><kbd>/</kbd></div>
+        <div><span>Закрыть окно / выйти из фокуса</span><kbd>Esc</kbd></div>
+        <div><span>Эта справка</span><kbd>?</kbd></div>
+      </div>
+      <div class="modal-actions"><button type="button" class="primary-btn" data-close-modal>Понятно</button></div>
+    </section>
+  </div>
+</body>
+</html>

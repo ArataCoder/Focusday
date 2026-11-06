@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Focusday widget</title>
+<style>
+:root{--text:#f3f4f8;--text-2:#a6aaba;--text-3:#6f7486;--accent:#8f7dff;--mint:#5ef0c0;--line:rgba(255,255,255,.09);--spring:cubic-bezier(.34,1.56,.64,1);--ease:cubic-bezier(.22,1,.36,1)}
+*{box-sizing:border-box;margin:0}
+html,body{width:100%;height:100%;background:transparent;overflow:hidden;font:13px/1.4 "Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;user-select:none}
+body{padding:10px}  /* место под тень внутри прозрачного окна */
+.panel{position:relative;height:100%;padding:14px 14px 12px 16px;border-radius:20px;overflow:hidden;
+  background:linear-gradient(160deg,rgba(34,34,46,.86),rgba(14,15,20,.9));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 0 0 1px var(--line),0 18px 40px -12px rgba(0,0,0,.7);
+  animation:in .55s var(--spring) both}
+.panel.out{animation:out .28s var(--ease) forwards}
+.panel::before{content:"";position:absolute;inset:-60% -30% auto auto;width:220px;height:220px;background:radial-gradient(closest-side,rgba(94,240,192,.22),transparent);pointer-events:none}
+.top{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--text-3);text-transform:uppercase}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 10px var(--mint);animation:breathe 1.6s ease-in-out infinite}
+.paused .dot{background:var(--text-3);box-shadow:none;animation:none}
+.time{margin-left:auto;font:600 13px/1 "Cascadia Mono",Consolas,monospace;color:var(--mint);letter-spacing:0}
+.close{width:22px;height:22px;display:grid;place-items:center;border:0;border-radius:7px;background:none;color:var(--text-3);font-size:15px;cursor:pointer}
+.close:hover{background:rgba(255,255,255,.08);color:var(--text)}
+.title{margin:9px 0 2px;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hint{font-size:12px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{height:3px;margin-top:10px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--mint),#6cc8ff);transition:width 1s linear}
+.actions{display:flex;gap:6px;margin-top:10px}
+.actions button{height:30px;padding:0 11px;border:0;border-radius:9px;font:600 12px/1 inherit;font-family:inherit;color:var(--text);background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px var(--line);cursor:pointer;transition:transform .25s var(--spring),background .15s}
+.actions button:hover{background:rgba(255,255,255,.12)}
+.actions button:active{transform:scale(.93)}
+.actions .primary{flex:1;color:#fff;background:linear-gradient(180deg,#a596ff,var(--accent));box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+.actions .done{color:#06281d;background:var(--mint)}
+@keyframes in{from{opacity:0;transform:translateX(40px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes out{to{opacity:0;transform:translateX(40px) scale(.96)}}
+@keyframes breathe{50%{opacity:.4}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+  <div class="panel" id="panel" data-tauri-drag-region>
+    <div class="top" data-tauri-drag-region><i class="dot"></i>Focusday<span class="time" id="time"></span><button class="close" id="close" aria-label="Скрыть">×</button></div>
+    <div class="title" id="task" data-tauri-drag-region>Выбери задачу в Focusday</div>
+    <div class="hint" id="hint" data-tauri-drag-region>Ты всё ещё делаешь задачу?</div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="actions">
+      <button class="primary" id="confirm">Продолжаю</button>
+      <button id="pause">Пауза</button>
+      <button class="done" id="done" title="Задача готова">✓</button>
+    </div>
+  </div>
+  <script src="focusday-desktop-bridge.js"></script>
+  <script src="overlay.js"></script>
+</body>
+</html>

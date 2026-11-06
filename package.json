@@ -1,0 +1,30 @@
+{
+  "name": "focusday",
+  "version": "1.3.0",
+  "private": true,
+  "description": "Focusday — ADHD-friendly task & habit tracker (Tauri v2)",
+  "scripts": {
+    "bundle": "node build.mjs",
+    "bundle:watch": "node build.mjs --watch",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "test": "node --test tests/unit/*.test.mjs",
+    "test:e2e": "npm run bundle && node tests/e2e/app.e2e.mjs",
+    "test:all": "npm test && npm run test:e2e",
+    "icon": "tauri icon app-icon.png",
+    "android:init": "tauri android init",
+    "android:dev": "tauri android dev",
+    "android:build": "tauri android build --apk",
+    "ios:init": "tauri ios init",
+    "ios:build": "tauri ios build",
+    "pwa:serve": "npx serve src",
+    "tauri": "tauri",
+    "android:apk-debug": "tauri android build --apk --debug"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2",
+    "esbuild": "^0.24",
+    "playwright": "^1.48"
+  },
+  "type": "module"
+}
