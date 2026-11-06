@@ -78,4 +78,44 @@ try {
   assert.equal(await hung.locator('#catBuddy').isVisible(),true);
   assert.deepEqual(hungErrors,[]); await hung.close();
   console.log('✔ Таймаут не скрывает котика и показывает этап сбоя');
+  // Все говорящие состояния требуют большого нативного окна, включая мурчание.
+  const bridge = await browser.newPage();
+  await bridge.addInitScript(() => {
+    window.__calls = [];
+    window.__TAURI__ = {core:{invoke:async(name,args)=>{if(name==='buddy') window.__calls.push(args.mode);}},event:{listen:async()=>()=>{},emit:async()=>{}}};
+  });
+  await bridge.goto(base+'/buddy.html');
+  await bridge.addScriptTag({url:base+'/focusday-desktop-bridge.js'});
+  await bridge.evaluate(async()=>{for(const mode of ['idle','purr','idle','alert','hidden']) await window.focusdayDesktop.buddy({mode});});
+  assert.deepEqual(await bridge.evaluate(()=>window.__calls),['small','large','small','large','hidden']);
+  await bridge.close();
+  console.log('✔ Размер окна учитывает мурчание');
+
+  // Проверка геометрии, перетаскивания и обычного клика с имитацией Tauri.
+  const cat = await browser.newPage({viewport:{width:340,height:250},reducedMotion:'reduce'});
+  const catErrors=[]; cat.on('pageerror',e=>catErrors.push(e.message));
+  await cat.addInitScript(()=>{
+    window.__handlers={}; window.__events=[]; window.__drags=0;
+    window.__TAURI__={window:{getCurrentWindow:()=>({startDragging:async()=>{window.__drags++;}})},event:{listen:async(name,cb)=>{window.__handlers[name]=cb;return()=>{};},emit:async(name,data)=>{window.__events.push([name,data]);}}};
+  });
+  await cat.goto(base+'/buddy.html'); await cat.waitForFunction(()=>window.__handlers['focusday://buddy-state']);
+  for (const mode of ['purr','alert','away','break','back']) {
+    await cat.evaluate(mode=>window.__handlers['focusday://buddy-state']({payload:{mode,text:mode==='purr'?'Мур. Я рядом. Осталось 25 мин — работаем 🐾':undefined,breakEndsAt:Date.now()+600000}}),mode);
+    const dims=await cat.evaluate(()=>{const rect=e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};}; const b=document.querySelector('.cat-bubble');return {bubble:rect(b),cat:rect(document.querySelector('.cat')),buttons:[...b.querySelectorAll('button')].filter(x=>x.offsetParent).map(rect),scroll:b.scrollHeight,client:b.clientHeight};});
+    for (const r of [dims.bubble,dims.cat,...dims.buttons]) assert.ok(r.left>=0 && r.top>=0 && r.right<=340 && r.bottom<=250,`${mode} обрезан: ${JSON.stringify(dims)}`);
+    assert.ok(dims.scroll<=dims.client,`${mode}: содержимое не помещается`);
+  }
+  await cat.evaluate(()=>window.__handlers['focusday://buddy-state']({payload:{mode:'idle'}}));
+  const box=await cat.locator('.cat').boundingBox(); const x=box.x+box.width/2,y=box.y+box.height/2;
+  await cat.mouse.move(x,y); await cat.mouse.down(); await cat.mouse.move(x+12,y+4); await cat.mouse.up();
+  assert.equal(await cat.evaluate(()=>window.__drags),1);
+  assert.equal(await cat.evaluate(()=>window.__events.filter(([n,a])=>n==='focusday://buddy-action'&&a==='pet').length),0,'перетаскивание не гладит');
+  await cat.locator('.cat').click();
+  assert.equal(await cat.evaluate(()=>window.__events.filter(([n,a])=>n==='focusday://buddy-action'&&a==='pet').length),1,'клик гладит');
+  await cat.evaluate(()=>window.__handlers['focusday://buddy-state']({payload:{mode:'away'}}));
+  await cat.locator('[data-cat="resume"]').click();
+  assert.equal(await cat.evaluate(()=>window.__drags),1,'кнопки облачка не перетаскивают');
+  assert.ok(await cat.evaluate(()=>window.__events.some(([n,a])=>n==='focusday://buddy-action'&&a==='resume')));
+  assert.deepEqual(catErrors,[]); await cat.close();
+  console.log('✔ Облачка помещаются; перетаскивание не мешает клику и кнопкам');
 } finally { await browser.close(); await new Promise(r=>server.close(r)); }
