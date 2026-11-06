@@ -78,7 +78,7 @@ body.light-theme .cat-actions button.primary{color:#fff;background:var(--accent)
 
 @keyframes tailWag{0%{transform:rotate(-9deg)}100%{transform:rotate(11deg)}}
 @keyframes catBreathe{0%,100%{transform:translateY(0)}50%{transform:translateY(1.2px)}}
-@keyframes eyeMove{0%,28%{transform:translateX(0)}34%,48%{transform:translateX(-3px)}54%,72%{transform:translateX(3px)}78%,100%{transform:translateX(0)}}
+@keyframes eyeMove{0%,28%{transform:translateX(0)}34%,48%{transform:translateX(-4.5px)}54%,72%{transform:translateX(4.5px)}78%,100%{transform:translateX(0)}}
 @keyframes catPeek{0%,100%{transform:rotate(0)}30%{transform:rotate(-6deg) translateY(-2px)}65%{transform:rotate(5deg)}}
 @keyframes bangPop{from{transform:scale(0)}to{transform:scale(1)}}
 @keyframes zFloat{0%{opacity:0;transform:translateY(6px)}40%{opacity:1}100%{opacity:0;transform:translateY(-8px)}}
