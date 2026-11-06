@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
 import assert from 'node:assert/strict';
 const root = resolve('src');
+const { version } = JSON.parse(await readFile('package.json', 'utf8'));
 const mime = {'.html':'text/html', '.js':'text/javascript', '.css':'text/css', '.webmanifest':'application/manifest+json', '.png':'image/png'};
 const server = createServer(async (req, res) => {
   const path = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
@@ -25,7 +26,7 @@ try {
   await page.evaluate(async () => { await navigator.serviceWorker.ready; });
   await page.reload(); await page.waitForFunction(() => navigator.serviceWorker.controller && window.__FD_TEST__);
   assert.equal(await page.evaluate(async () => (await fetch('/')).status),404);
-  const cached = await page.evaluate(async () => { const c = await caches.open('focusday-1.3.4'); return Promise.all(['focusday.html','focusday.css','focusday.js','manifest.webmanifest','icons/maskable-512.png'].map(async x=>!!(await c.match(x)))); });
+  const cached = await page.evaluate(async version => { const c = await caches.open('focusday-' + version); return Promise.all(['focusday.html','focusday.css','focusday.js','manifest.webmanifest','icons/maskable-512.png'].map(async x=>!!(await c.match(x)))); }, version);
   assert.deepEqual(cached, [true,true,true,true,true]);
   await ctx.setOffline(true); await page.reload(); await page.waitForFunction(() => window.__FD_TEST__);
   assert.equal(await page.title(), 'Focusday — дневник задач');

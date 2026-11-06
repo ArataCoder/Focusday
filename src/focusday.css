@@ -1176,3 +1176,61 @@ body.calm-motion *,body.calm-motion *::before,body.calm-motion *::after{animatio
   .seg button{white-space:normal;line-height:1.15;text-align:center;gap:4px}
   .seg button .ic{display:none}
 }
+
+/* Focusday usability pass: the work area precedes calendar and statistics. */
+.content-wrap > .greeting-row { order: 0; }
+.content-wrap > .quick-capture { order: 1; }
+.content-wrap > .work-layout { order: 2; }
+.content-wrap > .week-strip { order: 3; }
+.content-wrap > .overview-grid { order: 4; }
+.content-wrap > .activity-panel { order: 5; }
+.content-wrap > .app-footer { order: 6; }
+.welcome-modal { width:min(560px,100%); }
+.welcome-body { display:grid; gap:18px; line-height:1.5; }
+.welcome-body > p { color:var(--text-2); }
+.welcome-steps { display:grid; gap:10px; }
+.welcome-steps > div { display:flex; align-items:flex-start; gap:12px; padding:13px; border-radius:14px; background:var(--fill-1); border:1px solid var(--line); }
+.welcome-steps > div > b { display:grid; place-items:center; flex:none; width:29px; height:29px; border-radius:10px; color:var(--accent); background:color-mix(in srgb,var(--accent) 15%,transparent); }
+.welcome-steps span { display:grid; gap:3px; }
+.welcome-steps small,.welcome-hint { color:var(--text-2); font-size:13px; line-height:1.45; }
+.mobile-focus-note { display:none; }
+html.mobile-native #overlayBtn { display:none; }
+@media (max-width:640px) {
+  .topbar { gap:8px; padding:10px 14px; }
+  .top-actions { min-width:0; gap:6px; }
+  .top-actions .seg, .top-actions #overlayBtn, .top-actions #paletteBtn, .top-actions #soundBtn, .top-actions #themeBtn, .top-actions .top-add { display:none; }
+  .search-box { min-width:0; }
+  .mobile-menu { flex:none; min-width:44px; min-height:44px; }
+  .content-wrap { padding:8px 14px calc(96px + env(safe-area-inset-bottom)); }
+  .greeting-row { gap:8px; }
+  .greeting-row h1 { font-size:25px; }
+  .quick-capture input { font-size:16px; }
+  .quick-capture kbd, .add-task-inline kbd, .welcome-actions #welcomeShortcuts { display:none; }
+  .mobile-focus-note { display:block; margin:10px 0; color:var(--text-2); font-size:12px; line-height:1.45; }
+  .sidebar { padding-top:max(18px, env(safe-area-inset-top)); padding-bottom:max(16px, env(safe-area-inset-bottom)); }
+  .fab-button { bottom:calc(20px + env(safe-area-inset-bottom)); }
+  .modal { max-height: min(92vh, 92dvh); }
+  .welcome-actions { justify-content:flex-end; }
+  .welcome-actions .primary-btn { min-height:44px; }
+}
+
+/* Keep the introductory sheet usable on short displays. */
+.welcome-modal .modal-head, .welcome-modal .modal-actions { flex:none; }
+.welcome-body { min-height:0; overflow-y:auto; }
+@media(max-width:640px) {
+  .quick-capture .qc-submit { opacity:1; transform:none; flex:none; }
+  .desktop-shortcuts-link { display:none !important; }
+  .section-head { flex-wrap:wrap; }
+  .section-head .task-toolbar { margin-left:auto; }
+}
+
+.jump-focus { display:none; }
+@media(max-width:640px) {
+  .content-wrap > .jump-focus { order:2; display:flex; justify-content:center; align-items:center; min-height:44px; border:1px solid var(--line); border-radius:12px; background:var(--fill-1); color:var(--text); font-weight:600; }
+  .content-wrap > .work-layout { order:3; }
+  .content-wrap > .week-strip { order:4; }
+  .content-wrap > .overview-grid { order:5; }
+  .content-wrap > .activity-panel { order:6; }
+  .content-wrap > .app-footer { order:7; }
+  body.focus-mode .jump-focus { display:none; }
+}

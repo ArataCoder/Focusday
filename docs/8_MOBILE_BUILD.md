@@ -1,56 +1,48 @@
-# 8. Телефон: Android и iOS — реально ли и как
+# Focusday 1.3.6 — экспериментальная сборка Android
 
-## Короткий ответ
-* **Реально.** Focusday — веб-интерфейс + Tauri 2, а Tauri 2 собирает Android (APK/AAB) и iOS из того же кода. Rust-часть уже подготовлена: трей, оверлеи и глобальные клавиши отключаются на мобильных (`#[cfg(desktop)]`).
-* **Самый быстрый путь — PWA** (5 минут, бесплатно, Android и iPhone): выложить `src/` на Cloudflare Pages → открыть на телефоне → «Добавить на главный экран». Работает офлайн (service worker), синхронизируется с ПК через Supabase.
-* Нативный APK — когда захочется «настоящее приложение». iOS-приложение требует Mac — на Windows не собрать.
+## Важно до начала
+Это исходники, **не готовый APK**. Изменения проверены в браузере с размерами телефона, но Android WebView, компиляция Rust, установщик Windows и работа на реальном устройстве не проверены. Поэтому не удаляйте прежнее приложение и не храните единственную копию важных данных в этой версии. Обновление Windows: заранее экспортируйте и проверьте резервную копию в старой версии.
 
-## Что работает на телефоне
-| Функция | PWA | Tauri APK/iOS |
-|---|---|---|
-| Задачи, привычки, финансы, мысли, Q-строка | ✅ | ✅ |
-| Фокус-таймер, звуки, цитаты, котик в углу | ✅ | ✅ |
-| Синхронизация с ПК (Supabase, E2E) | ✅ | ✅ |
-| Офлайн | ✅ | ✅ |
-| Котик будит по простою | ❌ (нет системного idle на телефоне) | ❌ |
-| Трей, окно поверх всех программ, Ctrl+Alt+Space | ❌ | ❌ (нет такого в мобильных ОС) |
-| Таймер в фоне при выключенном экране | ⚠️ ОС может усыпить | ⚠️ уведомления — да |
+Сохраняем общий проект Tauri 2 и адаптируем интерфейс, а не пишем новое приложение. Звук на новом мобильном профиле не включается автоматически с таймером; его можно включить вручную. У ОС могут быть ограничения на фоновый звук и работу таймера.
 
-## Путь 1 — PWA (рекомендую начать с него)
-1. Залить на GitHub (уже есть для EXE) → dash.cloudflare.com → Workers & Pages → Create → Pages → Connect to Git → репозиторий.
-   Build command: `npm run bundle`, Output directory: `src`.
-2. Открой `https://focusday-xxx.pages.dev/focusday.html` (корень сайта может не содержать главную страницу).
-3. Android (Chrome): ⋮ → «Установить приложение». iPhone (Safari): «Поделиться» → «На экран Домой».
-4. Настройки → Синхронизация → тот же Supabase и пароль, что на ПК.
+**Не подтверждено на Android:** сохранение и восстановление после закрытия и обновления APK, скачивание и импорт резервных копий, шифрование и синхронизация Supabase (включая доступность Web Crypto в Android WebView), уведомления, сон/блокировка экрана, воспроизведение звука, стабильность на разных устройствах. Плавающее окно котика, глобальные клавиши, трей и системное отслеживание простоя Windows на Android не поддерживаются. Котик предназначен для показа внутри приложения. Ничего не обещаем относительно выполнения таймера или уведомления, когда приложение в фоне или выгружено ОС.
 
-## Путь 2 — Android APK через Tauri 2
-**Один раз поставить (Windows):**
-1. Android Studio → SDK Manager: Android SDK Platform 34, Build-Tools, **NDK (Side by side)**, Command-line Tools.
-2. Переменные среды: `JAVA_HOME` = `C:\Program Files\Android\Android Studio\jbr`, `ANDROID_HOME` = `%LOCALAPPDATA%\Android\Sdk`, `NDK_HOME` = `%ANDROID_HOME%\ndk\<версия>`.
-3. `rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android`
+PWA в браузере и APK — отдельные хранилища; данные не появятся сами по себе. Не меняйте схему/адрес WebView и идентификатор приложения на уже установленной версии без проверки миграции данных.
 
-**Сборка:**
+## Сборка на Windows (debug APK для своего телефона)
+
+1. Установите Node.js LTS (https://nodejs.org/), Rust через https://rustup.rs/ и Visual Studio Build Tools с компонентом «Разработка классических приложений на C++». Установите Android Studio: https://developer.android.com/studio.
+2. В Android Studio → More Actions → SDK Manager установите Android SDK Platform, Platform-Tools, Build-Tools, Command-line Tools и NDK (Side by side). Путь к SDK указан вверху окна. Установите один NDK и запишите точный номер папки в `Sdk\ndk`.
+3. Откройте новое окно PowerShell. Задайте переменные **для текущего окна** (при необходимости поменяйте путь к Android Studio и подставьте конкретную папку NDK):
+
+```powershell
+$env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
+$env:ANDROID_HOME = "$env:LOCALAPPDATA\Android\Sdk"
+$env:NDK_HOME = Join-Path $env:ANDROID_HOME 'ndk\ВСТАВЬ_НОМЕР_ПАПКИ_NDK'
+Test-Path "$env:JAVA_HOME\bin\java.exe"
+Test-Path $env:ANDROID_HOME
+Test-Path $env:NDK_HOME
 ```
+Каждая из трёх команд `Test-Path` должна вернуть `True`. При другом пути к SDK замените `ANDROID_HOME`. Каждое новое окно PowerShell требует повторно задать переменные, если вы не сделали это постоянно в настройках Windows.
+4. Распакуйте весь архив проекта. В PowerShell перейдите в папку, где лежит `package.json`, затем:
+
+```powershell
+rustup target add aarch64-linux-android
 npm install
-npm run android:init        # один раз: создаст src-tauri/gen/android
-npm run android:dev         # запуск на телефоне по USB (включи «Отладку по USB») или в эмуляторе
-npm run android:apk-debug   # APK для себя: src-tauri/gen/android/app/build/outputs/apk/
-npm run android:build       # релизный APK (нужно подписать — см. ниже)
+npm run bundle
+npm run android:init -- --ci --skip-targets-install
+npm run tauri -- android build --debug --apk --target aarch64 --ci
 ```
-Подпись релиза: `keytool -genkey -v -keystore focusday.jks -keyalg RSA -keysize 2048 -validity 10000 -alias focusday`, затем прописать keystore в `src-tauri/gen/android/app/build.gradle.kts` (раздел signingConfigs) — инструкция: v2.tauri.app/distribute/sign/android.
-Без Android Studio локально: Actions → «Build Android APK» (`.github/workflows/android.yml`; сначала локально `android:init` и закоммитить `gen/android`).
-Установка друзьям: отправить APK → «Разрешить установку из неизвестных источников». Google Play — разовые 25 $.
+`android:init` выполняется один раз для этой копии проекта; создаст `src-tauri/gen/android`. ARM64 подходит большинству современных телефонов, но не всем эмуляторам и старым устройствам. Для других архитектур ставьте соответствующий Rust target и выбирайте `--target` согласно `npx tauri android build --help`.
+5. Если сборка завершилась без ошибок, ищите `.apk` в `src-tauri\gen\android\app\build\outputs\apk\` (в подпапках). Файл debug — для тестов, не для магазина и не финальный релиз. Скопируйте его на свой телефон, при необходимости разрешите установку для приложения-источника. Не отключайте системную защиту в целом.
+6. На Android проверьте: открытие и повторное открытие; создание/редактирование/завершение задачи; таймер при открытом экране; котика; звук по нажатию; размер текста и клавиатуру; поворот экрана; сворачивание и блокировку; импорт и экспорт на **тестовых данных**. Запишите модель, версию Android, версию Android System WebView и результаты. Фоновую работу не считать надёжной до отдельной нативной реализации и испытаний.
 
-## Путь 3 — iOS
-* Нужен **Mac** с Xcode (или облачный Mac: MacinCloud, GitHub Actions `macos-latest`).
-* Бесплатный Apple ID — установка только на свой iPhone, приложение живёт 7 дней. Apple Developer Program (99 $/год) — TestFlight для друзей и App Store.
-```
-rustup target add aarch64-apple-ios aarch64-apple-ios-sim
-npm run ios:init
-npm run tauri ios dev       # симулятор или iPhone по кабелю
-npm run ios:build
-```
-**Мой совет для iPhone:** PWA. Для 20 друзей это бесплатно и без ограничений Apple.
+При ошибке пришлите полный текст начиная с первой строки с ошибкой, а также несколько десятков строк выше. Не публикуйте пароли и ключи. Процесс может потребовать скачивания зависимостей и занять время.
 
-## Честно о статусе
-Мобильная сборка подготовлена (cfg-разделение кода, зависимости только для ПК вынесены, скрипты, workflow), но в песочнице не компилировалась (нет Android SDK / Xcode). Возможные первые ошибки — версии NDK/Java; лечатся по сообщению `tauri android build`. Интерфейс уже адаптивный (проверен на 390 px), PWA-манифест и офлайн-кэш на месте.
+## Вариант GitHub Actions
+В `.github/workflows/android.yml` есть экспериментальный ручной workflow **Build Android APK (experimental)**. Он инициализирует Android-проект и пытается собрать debug APK для ARM64; эта конкретная конфигурация ещё не проверялась запуском. Чтобы попробовать, загрузите проект в отдельную ветку, откройте Actions → выберите существующий workflow `Build Android APK` (имя в списке берётся из основной ветки) → Run workflow → выберите тестовую ветку. При запуске будет использован файл workflow из выбранной ветки. Для ручного запуска файл workflow должен существовать в основной ветке; сейчас такой файл в репозитории уже есть. После успеха скачайте artifact `Focusday-Android-debug-arm64`; если этап упадёт, пришлите лог. Это не релизная подпись.
+
+## Источники
+- Предварительная настройка Tauri: https://v2.tauri.app/start/prerequisites/
+- Команды Tauri: https://v2.tauri.app/reference/cli/
+- Подпись Android-релиза: https://v2.tauri.app/distribute/sign/android/
