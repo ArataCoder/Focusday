@@ -32,6 +32,8 @@ try {
   await main.goto(base+'/focusday.html');await main.waitForFunction(()=>window.__FD_TEST__);
   await main.click('#focusStartBtn');await main.evaluate(()=>window.__FD_TEST__.buddyTick());
   await main.waitForFunction(()=>window.__buddyCalls>0);
+  await main.waitForFunction(()=>document.querySelector('#buddyWindowStatus').textContent.includes('ошибка'));
+  assert.match(await main.locator('#buddyWindowStatus').textContent(), /mock window unavailable/);
   assert.equal(await main.locator('#catBuddy').isVisible(),true,'котик остаётся в главном окне');
   await main.evaluate(()=>window.__handlers['focusday://buddy-visible']({payload:{mode:'idle'}}));
   assert.equal(await main.locator('#catBuddy').isHidden(),true,'после подтверждения отдельного окна запасной скрывается');
@@ -39,4 +41,41 @@ try {
   assert.equal(await main.locator('#catBuddy').isHidden(),true,'на паузе котик скрывается');
   assert.deepEqual(mainErrors,[]); await main.close();
   console.log('✔ Ошибка отдельного окна: запасной котик в главном окне');
+
+  // Сообщение ready и подтверждение отрисовки могут прийти до завершения команды.
+  const race=await browser.newPage(); const raceErrors=[]; race.on('pageerror',e=>raceErrors.push(e.message));
+  await race.addInitScript(()=>{
+    window.__FD_TEST_IDLE__=0; const handlers={}; window.__handlers=handlers;
+    window.__TAURI__={core:{invoke:(name,args)=>{if(name==='buddy' && args.mode!=='hidden') return new Promise(r=>window.__resolveBuddy=r); return Promise.resolve(null);}},event:{listen:async(name,cb)=>{handlers[name]=cb;return()=>{};},emit:async()=>{}}};
+  });
+  await race.goto(base+'/focusday.html'); await race.waitForFunction(()=>window.__FD_TEST__);
+  await race.click('#focusStartBtn'); await race.evaluate(()=>window.__FD_TEST__.buddyTick());
+  await race.waitForFunction(()=>window.__resolveBuddy);
+  assert.match(await race.locator('#buddyWindowStatus').textContent(), /создаётся/);
+  await race.evaluate(()=>window.__handlers['focusday://buddy-ready']({}));
+  assert.match(await race.locator('#buddyWindowStatus').textContent(), /подключено/);
+  await race.evaluate(()=>window.__handlers['focusday://buddy-visible']({payload:{mode:'idle'}}));
+  assert.match(await race.locator('#buddyWindowStatus').textContent(), /подтвердило отрисовку/);
+  await race.evaluate(()=>window.__resolveBuddy());
+  await race.waitForTimeout(100);
+  assert.match(await race.locator('#buddyWindowStatus').textContent(), /подтвердило отрисовку/);
+  assert.equal(await race.locator('#catBuddy').isHidden(),true);
+  await race.click('#focusStartBtn'); await race.evaluate(()=>window.__FD_TEST__.buddyTick());
+  assert.match(await race.locator('#buddyWindowStatus').textContent(), /запусти фокус/);
+  assert.deepEqual(raceErrors,[]); await race.close();
+  console.log('✔ Состояние диагностики при раннем подтверждении и паузе');
+
+  // Зависшая нативная команда не должна скрывать запасного котика.
+  const hung=await browser.newPage(); const hungErrors=[]; hung.on('pageerror',e=>hungErrors.push(e.message));
+  await hung.addInitScript(()=>{
+    window.__FD_TEST_IDLE__=0;
+    window.__TAURI__={core:{invoke:(name,args)=>name==='buddy'&&args.mode!=='hidden'?new Promise(()=>{}):Promise.resolve(null)},event:{listen:async()=>()=>{},emit:async()=>{}}};
+  });
+  await hung.goto(base+'/focusday.html'); await hung.waitForFunction(()=>window.__FD_TEST__);
+  await hung.click('#focusStartBtn'); await hung.evaluate(()=>window.__FD_TEST__.buddyTick());
+  await hung.waitForFunction(()=>document.querySelector('#buddyWindowStatus').textContent.includes('Нет ответа'),null,{timeout:10000});
+  assert.match(await hung.locator('#buddyWindowStatus').textContent(), /создаётся/);
+  assert.equal(await hung.locator('#catBuddy').isVisible(),true);
+  assert.deepEqual(hungErrors,[]); await hung.close();
+  console.log('✔ Таймаут не скрывает котика и показывает этап сбоя');
 } finally { await browser.close(); await new Promise(r=>server.close(r)); }
