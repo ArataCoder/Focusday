@@ -42,12 +42,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: '1.3.7'
-          releaseName: 'Focusday 1.3.7 — тест котика'
-          releaseBody: 'Тестовая Windows-сборка: исправлено облачко, добавлено перетаскивание и движение глаз. Перед обновлением сохраните резервную копию данных. Пожалуйста, проверьте работу котика на Windows.'
-          releaseCommitish: ${{ github.sha }}
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          releaseName: 'Focusday ${{ github.ref_name }}'
           releaseDraft: true
-          prerelease: true
       - uses: actions/upload-artifact@v4
         with:
           name: Focusday-Windows
