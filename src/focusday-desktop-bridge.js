@@ -11,6 +11,12 @@
   let lastState = null, lastBuddy = { mode: 'hidden' }, buddySize = 'hidden';
   let buddyQueue = Promise.resolve();
   const buddyVisibleListeners = new Set();
+  const buddyStatusListeners = new Set();
+  let buddyPhase = 'idle';
+  const buddyStatus = (phase, error) => {
+    buddyPhase = phase;
+    for (const cb of buddyStatusListeners) cb({ phase, error });
+  };
   const sizeOf = (mode) => mode === 'hidden' ? 'hidden' : (mode === 'idle' || mode === 'purr') ? 'small' : 'large';
 
   window.focusdayDesktop = {
@@ -25,13 +31,22 @@
       // Сериализуем создание/изменение окна, чтобы быстрая пауза не обогнала запуск.
       const op = buddyQueue.then(async () => {
         const size = sizeOf(lastBuddy.mode);
-        if (size !== buddySize) { await invoke('buddy', { mode: size }); buddySize = size; }
-        await emit('focusday://buddy-state', lastBuddy);
+        if (size !== buddySize) {
+          if (size !== 'hidden') buddyStatus('creating');
+          try { await invoke('buddy', { mode: size }); }
+          catch (err) { buddyStatus('error', String(err)); throw err; }
+          buddySize = size;
+          if (size === 'hidden') buddyStatus('idle');
+          else if (buddyPhase === 'creating') buddyStatus('created');
+        }
+        try { await emit('focusday://buddy-state', lastBuddy); }
+        catch (err) { buddyStatus('error', String(err)); throw err; }
       });
       buddyQueue = op.catch(() => {}); // ошибка не блокирует следующую попытку
       return op;
     },
     onBuddyVisible: (cb) => { buddyVisibleListeners.add(cb); return () => buddyVisibleListeners.delete(cb); },
+    onBuddyStatus: (cb) => { buddyStatusListeners.add(cb); return () => buddyStatusListeners.delete(cb); },
     onBuddyAction: (cb) => listen('focusday://buddy-action', (e) => cb(e.payload)),
     attention: () => invoke('attention').catch(() => {}),
     overlayAction: (action) => emit('focusday://overlay-action', action),
@@ -46,8 +61,8 @@
 
   // Оверлей открылся позже главного окна — отдать ему актуальное состояние.
   listen('focusday://overlay-ready', () => { if (lastState) emit('focusday://state', lastState); });
-  listen('focusday://buddy-ready', () => emit('focusday://buddy-state', lastBuddy));
-  listen('focusday://buddy-visible', (e) => { for (const cb of buddyVisibleListeners) cb(e.payload); });
+  listen('focusday://buddy-ready', () => { if (lastBuddy.mode !== 'hidden') buddyStatus('ready'); emit('focusday://buddy-state', lastBuddy); });
+  listen('focusday://buddy-visible', (e) => { if (lastBuddy.mode !== 'hidden' && e.payload?.mode === lastBuddy.mode) buddyStatus('visible'); for (const cb of buddyVisibleListeners) cb(e.payload); });
 
   // Нативные Windows-уведомления (Action Center) вместо Web Notification API.
   const N = T.notification;

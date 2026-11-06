@@ -60,6 +60,31 @@ function state() {
   return st;
 }
 let separateVisible = false;
+let windowPhase = 'idle', windowError = '', windowTimedOut = false, windowTimer = null;
+function renderWindowStatus() {
+  const el = $('#buddyWindowStatus'); if (!el) return;
+  if (!desktop()?.buddy) { el.textContent = 'Окно котика: доступно в версии для компьютера.'; return; }
+  if (mode === 'hidden') { el.textContent = 'Окно котика: запусти фокус, чтобы проверить.'; return; }
+  const messages = {
+    idle: 'Окно котика: ожидаем запуска.',
+    creating: 'Окно котика: создаётся…',
+    created: 'Окно котика: создано, ожидаем подключения…',
+    ready: 'Окно котика: подключено, ожидаем отрисовки…',
+    visible: 'Окно котика подтвердило отрисовку.',
+    error: 'Окно котика: ошибка' + (windowError ? ': ' + windowError.slice(0, 180) : '.')
+  };
+  el.textContent = (messages[windowPhase] || messages.idle) + (windowTimedOut && !['visible', 'error'].includes(windowPhase) ? ' Нет ответа более 8 секунд; котик останется в приложении.' : '');
+}
+function setWindowStatus(st) {
+  windowPhase = st?.phase || 'idle'; windowError = st?.error || '';
+  if (windowPhase === 'creating') {
+    windowTimedOut = false; clearTimeout(windowTimer);
+    windowTimer = setTimeout(() => { windowTimedOut = true; renderWindowStatus(); }, 8000);
+  } else if (['visible', 'error', 'idle'].includes(windowPhase)) {
+    clearTimeout(windowTimer); windowTimedOut = false;
+  }
+  renderWindowStatus();
+}
 function paintLocal() {
   const useWindow = !!desktop()?.buddy && separateVisible && mode !== 'hidden';
   document.body.classList.toggle('desktop-buddy', useWindow);
@@ -71,7 +96,7 @@ function paint() {
   paintLocal();
   if (desktop()?.buddy) desktop().buddy(st).catch(err => { separateVisible = false; paintLocal(); console.error('Focusday: окно котика недоступно', err); });
 }
-function setMode(m) { if (m === mode) return; mode = m; separateVisible = false; paint(); }
+function setMode(m) { if (m === mode) return; mode = m; separateVisible = false; if (m === 'hidden') { clearTimeout(windowTimer); windowTimedOut = false; } paint(); renderWindowStatus(); }
 
 /* Пауза с возвратом простоя: минуты, пока тебя не было, не засчитываются в фокус. */
 function pauseWithRefund(now = Date.now()) {
@@ -148,12 +173,14 @@ export function renderBuddySettings() {
     : src === 'test' ? 'Детектор: тестовый режим'
     : 'Детектор недоступен в этом браузере — котик просто сидит рядом. В EXE-версии работает всегда.';
   const allow = $('#buddyAllowWeb'); if (allow) allow.hidden = !!src || !('IdleDetector' in window);
+  renderWindowStatus();
 }
 
 export function bindBuddy() {
   ensureBuddy();
   root = $('#catBuddy'); if (root) mountCat(root, buddyAction);
   desktop()?.onBuddyAction?.(buddyAction);
+  desktop()?.onBuddyStatus?.(setWindowStatus);
   desktop()?.onBuddyVisible?.(st => { if (mode !== 'hidden' && st?.mode === mode) { separateVisible = true; paintLocal(); } });
   $('#buddyEnabled')?.addEventListener('click', () => { const b = ensureBuddy(); b.enabled = !b.enabled; persist(); renderBuddySettings(); buddyTick(); });
   $('#buddyNudge')?.addEventListener('click', () => { const b = ensureBuddy(); b.idleNudge = !b.idleNudge; persist(); renderBuddySettings(); });

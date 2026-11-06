@@ -5507,6 +5507,47 @@ g Не порти то, что имеешь, желанием того, чего
     return st;
   }
   var separateVisible = false;
+  var windowPhase = "idle";
+  var windowError = "";
+  var windowTimedOut = false;
+  var windowTimer = null;
+  function renderWindowStatus() {
+    const el = $("#buddyWindowStatus");
+    if (!el) return;
+    if (!desktop()?.buddy) {
+      el.textContent = "Окно котика: доступно в версии для компьютера.";
+      return;
+    }
+    if (mode === "hidden") {
+      el.textContent = "Окно котика: запусти фокус, чтобы проверить.";
+      return;
+    }
+    const messages = {
+      idle: "Окно котика: ожидаем запуска.",
+      creating: "Окно котика: создаётся…",
+      created: "Окно котика: создано, ожидаем подключения…",
+      ready: "Окно котика: подключено, ожидаем отрисовки…",
+      visible: "Окно котика подтвердило отрисовку.",
+      error: "Окно котика: ошибка" + (windowError ? ": " + windowError.slice(0, 180) : ".")
+    };
+    el.textContent = (messages[windowPhase] || messages.idle) + (windowTimedOut && !["visible", "error"].includes(windowPhase) ? " Нет ответа более 8 секунд; котик останется в приложении." : "");
+  }
+  function setWindowStatus(st) {
+    windowPhase = st?.phase || "idle";
+    windowError = st?.error || "";
+    if (windowPhase === "creating") {
+      windowTimedOut = false;
+      clearTimeout(windowTimer);
+      windowTimer = setTimeout(() => {
+        windowTimedOut = true;
+        renderWindowStatus();
+      }, 8e3);
+    } else if (["visible", "error", "idle"].includes(windowPhase)) {
+      clearTimeout(windowTimer);
+      windowTimedOut = false;
+    }
+    renderWindowStatus();
+  }
   function paintLocal() {
     const useWindow = !!desktop()?.buddy && separateVisible && mode !== "hidden";
     document.body.classList.toggle("desktop-buddy", useWindow);
@@ -5525,7 +5566,12 @@ g Не порти то, что имеешь, желанием того, чего
     if (m === mode) return;
     mode = m;
     separateVisible = false;
+    if (m === "hidden") {
+      clearTimeout(windowTimer);
+      windowTimedOut = false;
+    }
     paint3();
+    renderWindowStatus();
   }
   function pauseWithRefund(now = Date.now()) {
     const wasAlert = alertAt > 0;
@@ -5672,12 +5718,14 @@ g Не порти то, что имеешь, желанием того, чего
     if (st) st.textContent = src === "system" ? "Детектор: системный ввод Windows (мышь и клавиатура в любом приложении)" : src === "web" ? "Детектор: Idle Detection API браузера (весь компьютер)" : src === "test" ? "Детектор: тестовый режим" : "Детектор недоступен в этом браузере — котик просто сидит рядом. В EXE-версии работает всегда.";
     const allow = $("#buddyAllowWeb");
     if (allow) allow.hidden = !!src || !("IdleDetector" in window);
+    renderWindowStatus();
   }
   function bindBuddy() {
     ensureBuddy();
     root = $("#catBuddy");
     if (root) mountCat(root, buddyAction);
     desktop()?.onBuddyAction?.(buddyAction);
+    desktop()?.onBuddyStatus?.(setWindowStatus);
     desktop()?.onBuddyVisible?.((st) => {
       if (mode !== "hidden" && st?.mode === mode) {
         separateVisible = true;
