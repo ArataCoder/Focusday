@@ -5,13 +5,14 @@
    браузер — Idle Detection API (Chrome/Edge, по разрешению). Нет источника — котик просто сидит рядом. */
 import { $ } from '../core.js';
 import { data, persist } from '../state.js';
-import { toast } from '../render.js';
+import { renderFocus, toast } from '../render.js';
 import { pauseFocus, startFocus } from '../actions.js';
 import { award, checkAchievements } from '../progress.js';
 import { playSound } from '../sound.js';
 import { CAT_TEXT, mountCat, paintCat } from './cat-ui.js';
 
 const AWAY_AUTO_PAUSE_MS = 10 * 60e3;   // не ответил на «Ты ещё тут?» 10 минут → пауза
+let alertIdleSec = 0;
 let root = null, mode = 'hidden', alertAt = 0, lastNudgeAt = 0, sessionMuted = false, purrUntil = 0, wasRunning = false;
 let webIdle = { detector: null, state: 'active', abort: null };
 const desktop = () => window.focusdayDesktop;
@@ -67,6 +68,20 @@ function paint() {
 }
 function setMode(m) { if (m === mode) return; mode = m; paint(); }
 
+/* Пауза с возвратом простоя: минуты, пока тебя не было, не засчитываются в фокус. */
+function pauseWithRefund(now = Date.now()) {
+  const wasAlert = alertAt > 0;
+  pauseFocus(false);
+  if (wasAlert) {
+    const idleMs = Math.max(0, alertIdleSec * 1000 + (now - alertAt));
+    const cap = (data.focusMinutes || 25) * 60000;
+    const before = data.focusRemainingMs;
+    data.focusRemainingMs = Math.min(cap, before + idleMs);
+    if (data.focusRemainingMs - before >= 30e3) toast(`Время простоя (${Math.round((data.focusRemainingMs - before) / 60000) || 1} мин) вернул в таймер 🐾`);
+  }
+  alertAt = 0; alertIdleSec = 0; persist(); renderFocus();
+}
+
 /* ── Действия (из пузыря в окне или из окна-компаньона) ─────────── */
 export function buddyAction(a) {
   const b = ensureBuddy();
@@ -74,7 +89,7 @@ export function buddyAction(a) {
   if (a === 'snooze') { lastNudgeAt = Date.now(); alertAt = 0; setMode('idle'); toast('Отлично, продолжаем 🐾'); return; }
   if (a === 'mute') { sessionMuted = true; alertAt = 0; setMode('idle'); toast('До конца сессии котик не будет будить'); return; }
   if (a === 'pause') {
-    pauseFocus(); b.breakUntil = Date.now() + b.breakMin * 60e3; alertAt = 0; persist();
+    pauseWithRefund(); b.breakUntil = Date.now() + b.breakMin * 60e3; persist();
     award('catbreak'); checkAchievements(); setMode('break'); return;
   }
   if (a === 'extend') { b.breakUntil = Math.max(Date.now(), b.breakUntil) + 5 * 60e3; persist(); setMode('break'); paint(); return; }
@@ -101,7 +116,8 @@ export async function buddyTick(now = Date.now()) {
     if (!running || !b.enabled) { setMode('hidden'); return; }
     if (mode === 'purr' && now > purrUntil) setMode('idle');
     if (mode === 'alert') {
-      if (now - alertAt >= AWAY_AUTO_PAUSE_MS) { pauseFocus(); alertAt = 0; setMode('away'); }
+      // Не ответил 10 минут — или таймер вот-вот «досчитает» простой как фокус → пауза с возвратом времени.
+      if (now - alertAt >= AWAY_AUTO_PAUSE_MS || (data.focusRemainingMs > 0 && data.focusRemainingMs <= 15e3)) { pauseWithRefund(now); setMode('away'); }
       return;
     }
     if (mode === 'hidden') setMode('idle');
@@ -109,7 +125,7 @@ export async function buddyTick(now = Date.now()) {
     const idle = await idleSeconds();
     if (idle === null) return;
     if (idle >= b.idleMin * 60 && now - lastNudgeAt >= b.idleMin * 60e3) {
-      alertAt = now; lastNudgeAt = now; setMode('alert'); playSound('timer');
+      alertAt = now; alertIdleSec = idle; lastNudgeAt = now; setMode('alert'); playSound('timer');
       desktop()?.attention?.();
     }
   } finally { busy = false; }
@@ -120,6 +136,7 @@ export function renderBuddySettings() {
   $('#buddyEnabled')?.setAttribute('aria-pressed', String(b.enabled));
   $('#buddyNudge')?.setAttribute('aria-pressed', String(b.idleNudge));
   const sel = $('#buddyIdleMin'); if (sel) sel.value = String(b.idleMin);
+  const br = $('#buddyBreakMin'); if (br) br.value = String([5, 10, 15].includes(b.breakMin) ? b.breakMin : 5);
   const st = $('#buddyStatus'), src = idleSource();
   if (st) st.textContent = src === 'system' ? 'Детектор: системный ввод Windows (мышь и клавиатура в любом приложении)'
     : src === 'web' ? 'Детектор: Idle Detection API браузера (весь компьютер)'
@@ -135,6 +152,7 @@ export function bindBuddy() {
   $('#buddyEnabled')?.addEventListener('click', () => { const b = ensureBuddy(); b.enabled = !b.enabled; persist(); renderBuddySettings(); buddyTick(); });
   $('#buddyNudge')?.addEventListener('click', () => { const b = ensureBuddy(); b.idleNudge = !b.idleNudge; persist(); renderBuddySettings(); });
   $('#buddyIdleMin')?.addEventListener('change', (e) => { ensureBuddy().idleMin = +e.target.value; persist(); if (webIdle.detector) enableWebIdle(false); renderBuddySettings(); });
+  $('#buddyBreakMin')?.addEventListener('change', (e) => { ensureBuddy().breakMin = +e.target.value; persist(); renderBuddySettings(); });
   $('#buddyAllowWeb')?.addEventListener('click', () => enableWebIdle(true));
   if (ensureBuddy().webIdle && 'IdleDetector' in window) enableWebIdle(false);
   setInterval(() => buddyTick(), 5000);

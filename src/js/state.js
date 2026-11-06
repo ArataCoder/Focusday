@@ -49,7 +49,8 @@ export function loadData() {
   if (!['today','inbox','upcoming','done','habits','money','journal'].includes(data.view) && !String(data.view).startsWith('list:')) data.view = 'today';
   if (String(data.view).startsWith('list:') && !data.lists.some(l=>l.id===String(data.view).slice(5))) data.view='today';
   if (!['all','todo','inprogress','done'].includes(data.filter)) data.filter = 'all';
-  if (!['dark','light'].includes(data.theme)) data.theme = 'dark';
+  if (!['dark','light','auto'].includes(data.theme)) data.theme = 'dark';
+  data.calmMotion = !!data.calmMotion;
   data.energy = Math.max(1,Math.min(5,Number(data.energy)||3));
   data.focusMinutes = [10,25,45].includes(Number(data.focusMinutes)) ? Number(data.focusMinutes) : 10;
   data.focusRemainingMs = Math.max(0, Number(data.focusRemainingMs) || data.focusMinutes*60000);

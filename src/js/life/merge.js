@@ -23,6 +23,6 @@ export function mergeLife(out, local, inc, deleted, stats) {
   const lq = local.quotes || {}, iq = inc.quotes || {};
   if (lq.hidden || iq.hidden || lq.custom || iq.custom) {
     const custom = new Map([...(iq.custom || []), ...(lq.custom || [])].filter(x => x && x.id).map(x => [x.id, x]));
-    out.quotes = { ...iq, ...lq, hidden: [...new Set([...(lq.hidden || []), ...(iq.hidden || [])])], custom: [...custom.values()] };
+    out.quotes = { ...iq, ...lq, hidden: [...new Set([...(lq.hidden || []), ...(iq.hidden || [])])], custom: [...custom.values()], fav: [...new Set([...(lq.fav || []), ...(iq.fav || [])])] };
   }
 }

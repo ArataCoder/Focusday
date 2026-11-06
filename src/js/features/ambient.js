@@ -26,6 +26,11 @@ export function renderAmbient() {
   $$('#ambGrid [data-amb]').forEach(b => { const on = b.dataset.amb === a.id; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
   const v = $('#ambVol'); if (v && document.activeElement !== v) v.value = String(Math.round(a.volume * 100));
   const wf = $('#ambWithFocus'); if (wf) wf.setAttribute('aria-pressed', String(a.withFocus));
+  // Зеркало в «Настройки → Вид и звуки»
+  const sid = $('#setAmbId'); if (sid && document.activeElement !== sid) sid.value = a.id;
+  const sv = $('#setAmbVol'); if (sv && document.activeElement !== sv) sv.value = String(Math.round(a.volume * 100));
+  $('#setAmbWithFocus')?.setAttribute('aria-pressed', String(a.withFocus));
+  const pv = $('#setAmbPreview'); if (pv) { pv.querySelector('span').textContent = player.playing ? 'Остановить' : 'Послушать'; pv.querySelector('use')?.setAttribute('href', player.playing ? '#i-pause' : '#i-play'); }
 }
 export function playAmbient(id = ensureAmbient().id) { const a = ensureAmbient(); a.id = id; player.setVolume(a.volume); player.play(id); endingFade = false; persist(); renderAmbient(); }
 export function stopAmbient(fade = 1.5) { auto = false; player.stop(fade); renderAmbient(); setTimeout(renderAmbient, fade * 1000 + 250); }
@@ -54,6 +59,14 @@ export function bindAmbient() {
   $('#ambGrid').addEventListener('click', e => { const b = e.target.closest('[data-amb]'); if (b) playAmbient(b.dataset.amb); });
   $('#ambVol').addEventListener('input', e => { const a = ensureAmbient(); a.volume = Number(e.target.value) / 100; player.setVolume(a.volume); persist(); });
   $('#ambWithFocus').addEventListener('click', () => { const a = ensureAmbient(); a.withFocus = !a.withFocus; persist(); renderAmbient(); });
+  const sid = $('#setAmbId');
+  if (sid) {
+    sid.innerHTML = SOUNDS.map(s => `<option value="${s.id}">${s.emoji} ${esc(s.name)}</option>`).join('');
+    sid.addEventListener('change', () => { if (player.playing) playAmbient(sid.value); else { ensureAmbient().id = sid.value; persist(); renderAmbient(); } });
+    $('#setAmbVol')?.addEventListener('input', e => { const a = ensureAmbient(); a.volume = Number(e.target.value) / 100; player.setVolume(a.volume); persist(); renderAmbient(); });
+    $('#setAmbWithFocus')?.addEventListener('click', () => { const a = ensureAmbient(); a.withFocus = !a.withFocus; persist(); renderAmbient(); });
+    $('#setAmbPreview')?.addEventListener('click', () => { if (player.playing) stopAmbient(0.6); else { auto = false; playAmbient(); } });
+  }
   setInterval(followFocus, 1000);
   renderAmbient();
 }

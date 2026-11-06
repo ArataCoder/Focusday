@@ -1,52 +1,38 @@
-/* Focusday · база цитат.
+/* Focusday · встроенная база цитат (1000+). Тексты — в паках ./quotes/*.js (компактный формат, см. gentle.js).
    tone: 'gentle' — поддержка, 'drive' — дисциплина/действие, 'deep' — грустные/мрачные (по умолчанию скрыты).
-   cat:  gentle | action | dc | anime | samurai | classic.  Переводы — смысловые, не дословные.
-   Атрибуции проверены по первоисточникам, где это было возможно; спорные помечены «приписывается». */
+   Атрибуции: «Автор · Источник»; пересказ мысли — «по мотивам», спорное авторство — «приписывается».
+   Переводы смысловые, не дословные. id стабилен: хэш автора и текста (скрытые и избранные переживают обновления). */
+import gentle from './quotes/gentle.js';
+import action from './quotes/action.js';
+import dc from './quotes/dc.js';
+import anime from './quotes/anime.js';
+import samurai from './quotes/samurai.js';
+import classic from './quotes/classic.js';
+
 export const QUOTE_CATS = {
   gentle: 'Поддержка', action: 'Дисциплина и дело', dc: 'Бэтмен и DC', anime: 'Аниме', samurai: 'Самураи', classic: 'Классика'
 };
+const TONE = { g: 'gentle', d: 'drive', x: 'deep' };
+
+export function quoteId(cat, author, text) {
+  let h = 2166136261; for (const ch of `${author}\u0001${text}`) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); }
+  return cat[0] + (h >>> 0).toString(36);
+}
+
+/** «@Автор|Источник» — заголовок группы; «g|d|x текст» — цитата. Пустые строки и «#…» пропускаются. */
+export function parsePack(cat, src) {
+  let author = 'Focusday', source = 'Напоминание себе'; const out = [];
+  for (const raw of String(src).split('\n')) {
+    const l = raw.trim(); if (!l || l.startsWith('#')) continue;
+    if (l[0] === '@') { const [a, s = ''] = l.slice(1).split('|'); author = a.trim(); source = s.trim(); continue; }
+    const tone = TONE[l[0]]; if (!tone || l[1] !== ' ') continue;
+    const text = l.slice(2).trim(); if (!text) continue;
+    out.push({ id: quoteId(cat, author, text), cat, tone, text, author, source });
+  }
+  return out;
+}
+
 export const QUOTE_LIBRARY = [
-  // ── Поддержка (собственные, бережные) ──
-  { id: 'fd1', cat: 'gentle', tone: 'gentle', text: 'Прогресс — это не идеальный день. Это возвращение к тому, что важно.', author: 'Focusday', source: 'Напоминание себе' },
-  { id: 'fd2', cat: 'gentle', tone: 'gentle', text: 'Сделай версию на 20%. Начать важнее, чем сделать идеально.', author: 'Focusday', source: 'Напоминание себе' },
-  { id: 'fd3', cat: 'gentle', tone: 'gentle', text: 'Тебе не нужно хотеть делать задачу. Нужно только начать с маленького шага.', author: 'Focusday', source: 'Напоминание себе' },
-  { id: 'fd4', cat: 'gentle', tone: 'gentle', text: 'Отдых — часть плана, а не награда за истощение.', author: 'Focusday', source: 'Напоминание себе' },
-  { id: 'fd5', cat: 'gentle', tone: 'gentle', text: 'Одна законченная мелочь лучше десяти идеальных планов.', author: 'Focusday', source: 'Напоминание себе' },
-  { id: 'fd6', cat: 'gentle', tone: 'gentle', text: 'Пропущенный день — это пауза, а не приговор.', author: 'Focusday', source: 'Напоминание себе' },
-  { id: 'g1', cat: 'gentle', tone: 'gentle', text: 'Почти всё снова заработает, если отключить это на пару минут. Даже ты.', author: 'Энн Ламотт', source: 'TED, 2017' },
-  { id: 'g2', cat: 'gentle', tone: 'gentle', text: 'Начни там, где ты есть. Используй то, что у тебя есть. Делай то, что можешь.', author: 'Артур Эш', source: 'приписывается' },
-  { id: 'g3', cat: 'gentle', tone: 'gentle', text: 'Просто продолжай плыть.', author: 'Дори', source: 'В поисках Немо' },
-  { id: 'g4', cat: 'gentle', tone: 'gentle', text: 'Нам остаётся решить лишь одно: что делать со временем, которое нам дано.', author: 'Гэндальф', source: 'Властелин колец: Братство кольца' },
-  // ── Дисциплина и дело ──
-  { id: 'a1', cat: 'action', tone: 'drive', text: 'Самый действенный способ сделать что-то — просто сделать это.', author: 'Амелия Эрхарт', source: 'приписывается' },
-  { id: 'a2', cat: 'action', tone: 'gentle', text: 'Если не можешь лететь — беги. Не можешь бежать — иди. Не можешь идти — ползи. Но продолжай двигаться вперёд.', author: 'Мартин Лютер Кинг', source: 'речь в Спелмане, 1960' },
-  { id: 'a3', cat: 'action', tone: 'gentle', text: 'Вера — это сделать первый шаг, даже когда не видишь всей лестницы.', author: 'Мартин Лютер Кинг', source: 'приписывается' },
-  { id: 'a4', cat: 'action', tone: 'drive', text: 'Мотивация помогает начать. Привычка помогает продолжать.', author: 'Джим Рюн', source: 'приписывается' },
-  { id: 'a5', cat: 'action', tone: 'drive', text: 'Мотивация приходит после того, как ты начал, а не до.', author: 'Марк Мэнсон', source: 'принцип «Делай что-нибудь»' },
-  { id: 'a6', cat: 'action', tone: 'drive', text: 'Желание — это договор с собой быть несчастным, пока не получишь желаемое. Выбирай желания осознанно.', author: 'Наваль Равикант', source: 'The Almanack of Naval Ravikant' },
-  { id: 'a7', cat: 'action', tone: 'drive', text: 'Секрет движения вперёд — начать.', author: 'Марк Твен', source: 'приписывается' },
-  // ── Бэтмен и DC ──
-  { id: 'b1', cat: 'dc', tone: 'drive', text: 'Не то, кто я внутри, а то, что я делаю, определяет меня.', author: 'Брюс Уэйн', source: 'Batman Begins' },
-  { id: 'b2', cat: 'dc', tone: 'gentle', text: 'Зачем мы падаем, Брюс? Чтобы научиться подниматься.', author: 'Томас Уэйн', source: 'Batman Begins' },
-  { id: 'b3', cat: 'dc', tone: 'gentle', text: 'Ночь темнее всего перед рассветом.', author: 'Харви Дент', source: 'The Dark Knight' },
-  { id: 'b4', cat: 'dc', tone: 'deep', text: 'Ты либо умираешь героем, либо живёшь достаточно долго, чтобы стать злодеем.', author: 'Харви Дент', source: 'The Dark Knight' },
-  // ── Аниме ──
-  { id: 'n1', cat: 'anime', tone: 'gentle', text: 'У тебя нет врагов. Ни у кого в этом мире нет врагов. Нет никого, кому стоило бы причинять боль.', author: 'Торс', source: 'Vinland Saga' },
-  { id: 'n2', cat: 'anime', tone: 'gentle', text: 'У меня нет врагов.', author: 'Торфинн', source: 'Vinland Saga' },
-  { id: 'n3', cat: 'anime', tone: 'drive', text: 'Борись. Даже когда кажется, что сил не осталось, — сделай ещё один шаг.', author: 'Гатс', source: 'Berserk · по мотивам' },
-  { id: 'n4', cat: 'anime', tone: 'deep', text: 'Я ненавижу дождь. В этом пустом мире, где идёт дождь, я остаюсь совсем один.', author: 'Куросаки Ичиго', source: 'Bleach · по мотивам' },
-  { id: 'n5', cat: 'anime', tone: 'drive', text: 'Если не будешь рисковать, не сможешь создать будущее.', author: 'Монки Д. Луффи', source: 'One Piece · приписывается' },
-  { id: 'n6', cat: 'anime', tone: 'gentle', text: 'Неважно, насколько ты слаб. Важно, что ты встал.', author: 'Всемогущий', source: 'Моя геройская академия · по мотивам' },
-  { id: 'n7', cat: 'anime', tone: 'gentle', text: 'Иногда жизнь — тёмный тоннель. Но если продолжать идти, обязательно выйдешь к свету.', author: 'Дядюшка Айро', source: 'Аватар: Легенда об Аанге' },
-  // ── Самураи ──
-  { id: 's1', cat: 'samurai', tone: 'drive', text: 'Сегодня — победа над собой вчерашним.', author: 'Миямото Мусаси', source: 'Книга пяти колец' },
-  { id: 's2', cat: 'samurai', tone: 'drive', text: 'Не делай ничего бесполезного.', author: 'Миямото Мусаси', source: 'Книга пяти колец' },
-  { id: 's3', cat: 'samurai', tone: 'gentle', text: 'Нет ничего, кроме единственной цели настоящего момента.', author: 'Ямамото Цунэтомо', source: 'Хагакурэ' },
-  { id: 's4', cat: 'samurai', tone: 'gentle', text: 'К важным делам относись легко. К лёгким — серьёзно.', author: 'Ямамото Цунэтомо', source: 'Хагакурэ' },
-  { id: 's5', cat: 'samurai', tone: 'drive', text: 'Путь — в ежедневной тренировке.', author: 'Миямото Мусаси', source: 'Книга пяти колец · по мотивам' },
-  // ── Классика ──
-  { id: 'c1', cat: 'classic', tone: 'gentle', text: 'Путь в тысячу ли начинается с первого шага.', author: 'Лао-цзы', source: 'Дао дэ цзин' },
-  { id: 'c2', cat: 'classic', tone: 'drive', text: 'Пока мы откладываем жизнь, она проходит.', author: 'Сенека', source: 'Письма к Луцилию' },
-  { id: 'c3', cat: 'classic', tone: 'gentle', text: 'У тебя есть власть над своим умом, а не над внешними событиями. Осознай это — и обретёшь силу.', author: 'Марк Аврелий', source: 'Размышления · по мотивам' },
-  { id: 'c4', cat: 'classic', tone: 'gentle', text: 'Не так важно, как медленно ты идёшь, если ты не останавливаешься.', author: 'Конфуций', source: 'приписывается' }
+  ...parsePack('gentle', gentle), ...parsePack('action', action), ...parsePack('dc', dc),
+  ...parsePack('anime', anime), ...parsePack('samurai', samurai), ...parsePack('classic', classic)
 ];

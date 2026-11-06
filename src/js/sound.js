@@ -8,7 +8,7 @@ export function syncSoundButtons() {
   const btn = $('#soundBtn');
   if (btn) { btn.title = enabled ? 'Отключить звуки' : 'Включить звуки'; btn.setAttribute('aria-pressed', String(enabled)); }
   const settingsBtn = $('#soundSettingsBtn');
-  if (settingsBtn) { settingsBtn.textContent = enabled ? 'Звук включён' : 'Звук выключен'; settingsBtn.setAttribute('aria-pressed', String(enabled)); }
+  if (settingsBtn) { settingsBtn.setAttribute('aria-pressed', String(enabled)); }
 }
 export function playSound(kind='click') {
   if (data.soundEnabled === false) return;

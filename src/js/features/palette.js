@@ -1,5 +1,6 @@
 /* Focusday · palette.js — палитра команд Ctrl+K: поиск по задачам/привычкам/мыслям + быстрые действия.
    Понимает синтаксис Q: «@вода», «-$5 кофе», «!мысль» прямо из палитры. «/» — обычный поиск по задачам. */
+import { openSettings } from './settings.js';
 import { $, esc, ic } from '../core.js';
 import { data } from '../state.js';
 import { closeModals, openModal, showModal, switchView } from '../render.js';
@@ -41,11 +42,15 @@ export function commands() {
     { t: 'Привычки', k: '5', icon: 'leaf', run: go('habits'), group: 'Разделы' }, { t: 'Финансы', k: '6', icon: 'wallet', run: go('money'), group: 'Разделы' },
     { t: 'Мысли', k: '7', icon: 'pen', run: go('journal'), group: 'Разделы' },
     { t: 'Достижения', icon: 'trophy', run: () => $('#achievementsBtn')?.click(), group: 'Разделы' },
-    { t: 'Настройки и данные', icon: 'gear', run: () => $('#settingsBtn')?.click(), group: 'Разделы' },
+    { t: 'Настройки: вид и звуки', icon: 'gear', run: () => openSettings('look'), group: 'Настройки' },
+    { t: 'Настройки: котик-напарник', hint: '🐾', icon: 'gear', run: () => openSettings('buddy'), group: 'Настройки' },
+    { t: 'Настройки: цитаты', icon: 'feather', run: () => openSettings('quotes'), group: 'Настройки' },
+    { t: 'Настройки: синхронизация', icon: 'sync', run: () => openSettings('sync'), group: 'Настройки' },
+    { t: 'Настройки: данные и бэкапы', icon: 'download', run: () => openSettings('data'), group: 'Настройки' },
     { t: playing ? 'Выключить фоновый звук' : 'Включить фоновый звук', icon: 'wave', run: () => playing ? stopAmbient() : playAmbient(), group: 'Звук' },
     ...SOUNDS.map(s => ({ t: `Фон: ${s.name}`, hint: s.emoji, icon: 'wave', run: () => playAmbient(s.id), group: 'Звук' })),
     { t: 'Другая цитата', icon: 'feather', run: () => showNextQuote(true) },
-    { t: 'Сменить тему', icon: data.theme === 'light' ? 'moon' : 'sun', run: () => $('#themeBtn')?.click() },
+    { t: 'Сменить тему', icon: document.body.classList.contains('light-theme') ? 'moon' : 'sun', run: () => $('#themeBtn')?.click() },
     { t: 'Экспорт бэкапа (.json)', icon: 'download', run: exportData, group: 'Данные' },
     SyncEngine.enabled() && { t: 'Синхронизировать сейчас', icon: 'sync', run: () => SyncEngine.syncNow('manual'), group: 'Данные' },
     window.focusdayDesktop && { t: 'Плавающий виджет', k: 'Ctrl Alt F', icon: 'widget', run: () => window.focusdayDesktop.openOverlay(), group: 'Данные' }
@@ -102,4 +107,4 @@ export function bindPalette() {
     if (e.key === '/' && !typing && !e.ctrlKey && !e.metaKey && !document.querySelector('.modal-backdrop:not([hidden])')) { e.preventDefault(); $('#searchInput')?.focus(); }
   });
 }
-function $$active() { document.querySelectorAll('#paletteList .pal-item').forEach(li => { const on = +li.dataset.i === active; li.classList.toggle('active', on); li.setAttribute('aria-selected', String(on)); }); }
+function $$active() { document.querySelectorAll('#paletteList .pal-item').forEach(li => { const on = +li.dataset.i === active; li.classList.toggle('active', on); li.setAttribute('aria-selected', String(on)); }); $('#paletteInput').setAttribute('aria-activedescendant', items.length ? `pal-${active}` : ''); }

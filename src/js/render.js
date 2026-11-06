@@ -146,7 +146,7 @@ export function renderHeader() {
 /** Плагины модулей (features/*) регистрируют здесь свой рендер: [имя, функция]. */
 export const renderHooks = [];
 export function renderAll(){
-  document.body.classList.toggle('light-theme',data.theme==='light');
+  document.body.classList.toggle('light-theme',data.theme==='light'||(data.theme==='auto'&&!!window.matchMedia?.('(prefers-color-scheme: light)').matches));
   // Независимые блоки: ошибка одного виджета не должна скрывать календарь или задачи.
   [['achievements',renderAchievements],['header',renderHeader],['lists',renderLists],['calendar',renderCalendar],['tasks',renderTasks],['focus',renderFocus],['heatmap',renderHeatmap],['level',renderProgress],['life',renderLife],...renderHooks].forEach(([name,fn])=>{try{fn();}catch(err){console.error(`Focusday: ошибка отрисовки блока «${name}»`,err);}});
   const energy=$('#energyLabel');if(energy)energy.textContent=ENERGY[data.energy]||ENERGY[3];

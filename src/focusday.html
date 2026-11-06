@@ -4,12 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark light">
-  <meta name="theme-color" content="#0a0b0f">
+  <meta name="theme-color" content="#0b0b14">
   <title>Focusday — дневник задач</title>
   <link rel="stylesheet" href="focusday.css">
   <link rel="stylesheet" href="cat.css">
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#07080b">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <script src="focusday-desktop-bridge.js" defer></script>
   <script src="focusday.js" defer></script>
@@ -294,7 +293,7 @@
               <button type="button" id="tinyStepBtn" class="tiny-step-button">Помоги начать <svg><use href="#i-right"/></svg></button>
             </section>
             <section class="quote-card glass" aria-live="polite"><span class="quote-mark" aria-hidden="true">“</span><p id="dailyQuote">«Прогресс — это не идеальный день. Это возвращение к тому, что важно.»</p><span class="quote-author" id="quoteAuthor"><b>Focusday</b> · Напоминание себе</span>
-              <div class="quote-actions"><button type="button" class="tiny-icon" id="quoteNext" title="Другая цитата" aria-label="Другая цитата"><svg><use href="#i-repeat"/></svg></button><button type="button" class="tiny-icon" id="quoteHide" title="Больше не показывать эту" aria-label="Больше не показывать эту цитату"><svg><use href="#i-eye-off"/></svg></button></div></section>
+              <div class="quote-actions"><button type="button" class="tiny-icon" id="quoteFav" aria-pressed="false" title="В избранное — показывать чаще" aria-label="В избранное"><svg><use href="#i-heart"/></svg></button><button type="button" class="tiny-icon" id="quoteNext" title="Другая цитата" aria-label="Другая цитата"><svg><use href="#i-repeat"/></svg></button><button type="button" class="tiny-icon" id="quoteHide" title="Больше не показывать эту" aria-label="Больше не показывать эту цитату"><svg><use href="#i-eye-off"/></svg></button></div></section>
           </aside>
         </section>
 
@@ -358,27 +357,76 @@
 
   <div class="modal-backdrop" id="settingsModal" hidden>
     <section class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
-      <header class="modal-head"><div><span class="eyebrow">Твои данные — под твоим контролем</span><h2 id="settingsTitle">Настройки и данные</h2></div><button type="button" class="icon-btn" data-close-modal aria-label="Закрыть"><svg><use href="#i-x"/></svg></button></header>
-      <div class="modal-body">
-        <p class="settings-copy">Данные хранятся локально на этом устройстве. Экспортируй резервную копию, чтобы перенести дневник на другой компьютер.</p>
-        <div class="sound-setting"><div><strong>Звуки интерфейса</strong><small>Мягкие сигналы при действиях и запуске фокуса</small></div><button id="soundSettingsBtn" class="secondary-btn" type="button" aria-pressed="true">Звук включён</button></div>
-        <details class="set-group" id="buddyGroup">
-          <summary><svg class="ic"><use href="#i-cat"/></svg><span><strong>Котик-напарник</strong><small>Сидит рядом во время фокуса. Будит, если ты пропал</small></span></summary>
-          <button type="button" class="switch-row" id="buddyEnabled" aria-pressed="true"><span>Котик-напарник в углу во время фокуса</span><i class="switch" aria-hidden="true"></i></button>
-          <button type="button" class="switch-row" id="buddyNudge" aria-pressed="true"><span>Котик-напоминалка при неактивности (Idle 15–20 мин)</span><i class="switch" aria-hidden="true"></i></button>
-          <label class="set-line">Будить, если нет мыши и клавиатуры<select id="buddyIdleMin" class="select"><option value="10">10 минут</option><option value="15" selected>15 минут</option><option value="20">20 минут</option><option value="30">30 минут</option></select></label>
-          <small class="set-note" id="buddyStatus"></small>
-          <button type="button" class="secondary-btn" id="buddyAllowWeb" hidden>Разрешить детектор простоя (Chrome / Edge)</button>
-        </details>
-        <details class="set-group" id="quoteGroup">
-          <summary><svg class="ic"><use href="#i-quote"/></svg><span><strong>Цитаты</strong><small id="quoteInfo">Фильтр, скрытые, свои базы JSON</small></span></summary>
-          <div class="chip-row" id="quoteCats" role="group" aria-label="Категории цитат"></div>
-          <button type="button" class="switch-row" id="quoteDeep" aria-pressed="false"><span>Показывать грустные и мрачные</span><i class="switch" aria-hidden="true"></i></button>
-          <div class="set-buttons"><label class="secondary-btn import-label"><svg><use href="#i-upload"/></svg> Загрузить JSON с цитатами<input id="quoteImport" type="file" accept="application/json,.json" hidden></label><button type="button" class="secondary-btn" id="quoteUnhide" hidden>Вернуть скрытые</button></div>
-          <small class="set-note">Формат: <code>[{"text":"…","author":"…","source":"…","tone":"gentle|drive|deep"}]</code> или просто массив строк.</small>
-        </details>
-        <details class="set-group" id="syncGroup">
-          <summary><svg class="ic"><use href="#i-sync"/></svg><span><strong>Синхронизация ПК ⇄ телефон</strong><small id="syncStatus">Сквозное шифрование. Сервер видит только шифротекст</small></span></summary>
+      <header class="modal-head"><div><span class="eyebrow">Всё под твоим контролем</span><h2 id="settingsTitle">Настройки</h2></div><button type="button" class="icon-btn" data-close-modal aria-label="Закрыть"><svg><use href="#i-x"/></svg></button></header>
+      <div class="modal-body settings-body">
+        <nav class="set-tabs" role="tablist" aria-label="Разделы настроек">
+          <button type="button" class="set-tab" role="tab" data-set-tab="look" id="setTab-look" aria-controls="setPane-look" aria-selected="true"><span aria-hidden="true">🎨</span><b>Вид и звуки</b></button>
+          <button type="button" class="set-tab" role="tab" data-set-tab="buddy" id="setTab-buddy" aria-controls="setPane-buddy" aria-selected="false" tabindex="-1"><span aria-hidden="true">🐾</span><b>Котик-напарник</b></button>
+          <button type="button" class="set-tab" role="tab" data-set-tab="quotes" id="setTab-quotes" aria-controls="setPane-quotes" aria-selected="false" tabindex="-1"><span aria-hidden="true">💬</span><b>Цитаты</b></button>
+          <button type="button" class="set-tab" role="tab" data-set-tab="sync" id="setTab-sync" aria-controls="setPane-sync" aria-selected="false" tabindex="-1"><span aria-hidden="true">🔄</span><b>Синхронизация</b></button>
+          <button type="button" class="set-tab" role="tab" data-set-tab="data" id="setTab-data" aria-controls="setPane-data" aria-selected="false" tabindex="-1"><span aria-hidden="true">💾</span><b>Данные и бэкапы</b></button>
+        </nav>
+        <div class="set-panes">
+
+          <section class="set-pane" id="setPane-look" data-set-pane="look" role="tabpanel" aria-labelledby="setTab-look">
+            <header class="pane-head"><h3>🎨 Внешний вид и звуки</h3><p>Тема, анимации, мягкие сигналы и фоновый шум для фокуса.</p></header>
+            <div class="set-card">
+              <h4>Тема интерфейса</h4>
+              <div class="seg" id="themeSeg" role="radiogroup" aria-label="Тема">
+                <button type="button" role="radio" data-theme-set="dark" aria-checked="false"><svg class="ic"><use href="#i-moon"/></svg>Тёмная</button>
+                <button type="button" role="radio" data-theme-set="light" aria-checked="false"><svg class="ic"><use href="#i-sun"/></svg>Светлая</button>
+                <button type="button" role="radio" data-theme-set="auto" aria-checked="false"><svg class="ic"><use href="#i-layout"/></svg>Как в системе</button>
+              </div>
+              <button type="button" class="switch-row" id="calmMotion" aria-pressed="false"><span>Спокойный режим: меньше анимаций и движения<small>Помогает, если мелькание отвлекает</small></span><i class="switch" aria-hidden="true"></i></button>
+            </div>
+            <div class="set-card">
+              <h4>Звуки интерфейса</h4>
+              <button type="button" class="switch-row" id="soundSettingsBtn" aria-pressed="true"><span>Мягкие звуки UI<small>Щелчок, старт фокуса, достижения</small></span><i class="switch" aria-hidden="true"></i></button>
+            </div>
+            <div class="set-card">
+              <h4>Фоновый шум для фокуса</h4>
+              <label class="set-line">Звук по умолчанию<select id="setAmbId" class="select"></select></label>
+              <label class="set-line">Громкость<input id="setAmbVol" class="range" type="range" min="0" max="100" step="1" aria-label="Громкость фона"></label>
+              <button type="button" class="switch-row" id="setAmbWithFocus" aria-pressed="true"><span>Включать вместе с фокусом, затухать в конце<small>Плавный вход, мягкий fade-out за 10 секунд до конца</small></span><i class="switch" aria-hidden="true"></i></button>
+              <div class="set-buttons"><button type="button" class="secondary-btn" id="setAmbPreview"><svg><use href="#i-play"/></svg> <span>Послушать</span></button></div>
+            </div>
+          </section>
+
+          <section class="set-pane" id="setPane-buddy" data-set-pane="buddy" role="tabpanel" aria-labelledby="setTab-buddy" hidden>
+            <header class="pane-head"><h3>🐾 Котик-напарник</h3><p>Сидит в углу во время фокуса. Будит, только если ты правда пропал.</p></header>
+            <div class="set-card" id="buddyGroup">
+              <button type="button" class="switch-row" id="buddyEnabled" aria-pressed="true"><span>Котик в углу во время фокуса<small>Моргает, машет хвостом — работать рядом с кем-то легче</small></span><i class="switch" aria-hidden="true"></i></button>
+              <button type="button" class="switch-row" id="buddyNudge" aria-pressed="true"><span>Котик-напоминалка при неактивности (Idle 15–20 мин)<small>«Ты всё ещё в потоке или сделаем паузу? 🐾»</small></span><i class="switch" aria-hidden="true"></i></button>
+              <label class="set-line">Будить, если нет мыши и клавиатуры<select id="buddyIdleMin" class="select"><option value="10">10 минут</option><option value="15" selected>15 минут</option><option value="20">20 минут</option><option value="30">30 минут</option></select></label>
+              <label class="set-line">Перерыв по «Взял паузу ☕»<select id="buddyBreakMin" class="select"><option value="5" selected>5 минут</option><option value="10">10 минут</option><option value="15">15 минут</option></select></label>
+            </div>
+            <div class="set-card">
+              <h4>Детектор простоя</h4>
+              <small class="set-note" id="buddyStatus"></small>
+              <button type="button" class="secondary-btn" id="buddyAllowWeb" hidden>Разрешить детектор простоя (Chrome / Edge)</button>
+              <small class="set-note">Время, пока тебя не было, не засчитывается в фокус: при паузе котик возвращает его в таймер.</small>
+            </div>
+          </section>
+
+          <section class="set-pane" id="setPane-quotes" data-set-pane="quotes" role="tabpanel" aria-labelledby="setTab-quotes" hidden>
+            <header class="pane-head"><h3>💬 Цитаты и вдохновение</h3><p id="quoteInfo">Встроенная база 1000+ цитат</p></header>
+            <div class="set-card" id="quoteGroup">
+              <h4>Категории</h4>
+              <div class="chip-row" id="quoteCats" role="group" aria-label="Категории цитат"></div>
+              <button type="button" class="switch-row" id="quoteDeep" aria-pressed="false"><span>Показывать грустные и мрачные<small>По умолчанию скрыты — только поддерживающий тон</small></span><i class="switch" aria-hidden="true"></i></button>
+              <small class="set-note">Цитата меняется мягко: раз в 5 минут и когда возвращаешься к окну после отсутствия дольше 2,5 минут. На карточке: ❤ — чаще показывать, 👁 — больше не показывать.</small>
+              <div class="set-buttons"><button type="button" class="secondary-btn" id="quoteUnhide" hidden>Вернуть скрытые</button></div>
+            </div>
+            <div class="set-card">
+              <h4>Свои паки</h4>
+              <div class="set-buttons"><label class="secondary-btn import-label"><svg><use href="#i-upload"/></svg> Загрузить свой JSON<input id="quoteImport" type="file" accept="application/json,.json" hidden></label><button type="button" class="secondary-btn" id="quoteCustomClear" hidden>Удалить свои цитаты</button></div>
+              <small class="set-note">Формат: <code>[{"text":"…","author":"…","source":"…","tone":"gentle|drive|deep"}]</code> или просто массив строк.</small>
+            </div>
+          </section>
+
+          <section class="set-pane" id="setPane-sync" data-set-pane="sync" role="tabpanel" aria-labelledby="setTab-sync" hidden>
+            <header class="pane-head"><h3>🔄 Синхронизация ПК ⇄ телефон</h3><p id="syncStatus">Сквозное шифрование. Сервер видит только шифротекст</p></header>
+            <div class="set-card" id="syncGroup">
           <label class="set-line col">Пароль синхронизации (одинаковый на всех устройствах, от 10 символов)<input id="vaultPass" class="text-field" type="password" autocomplete="new-password" minlength="10" placeholder="Не хранится и не отправляется"></label>
           <div class="sync-card"><div><strong><svg class="ic"><use href="#i-history"/></svg> Папка</strong><small>Google Drive · OneDrive · iCloud · Dropbox — <span id="folderInfo">не выбрана</span></small></div><button type="button" id="folderPickBtn" class="secondary-btn">Выбрать</button></div>
           <div class="sync-card col"><div><strong><svg class="ic"><use href="#i-cloud"/></svg> Облако Supabase</strong><small id="cloudInfo">не подключено</small></div>
@@ -386,16 +434,31 @@
             <div class="set-buttons"><button type="button" id="cloudLoginBtn" class="secondary-btn">Войти</button><button type="button" id="cloudSignupBtn" class="secondary-btn">Создать аккаунт</button></div></div>
           <div class="set-buttons"><button type="button" id="syncNowBtn" class="primary-btn"><svg><use href="#i-sync"/></svg> Синхронизировать сейчас</button><button type="button" id="syncOffBtn" class="secondary-btn">Отключить</button></div>
           <small class="set-note">Забудешь пароль — облачную копию не расшифрует никто (даже мы). Данные на устройстве при этом останутся.</small>
-        </details>
-        <div class="settings-actions">
+            </div>
+          </section>
+
+          <section class="set-pane" id="setPane-data" data-set-pane="data" role="tabpanel" aria-labelledby="setTab-data" hidden>
+            <header class="pane-head"><h3>💾 Резервные копии и данные</h3><p>Данные хранятся локально на этом устройстве. Бэкап переносит всё одним файлом.</p></header>
+            <div class="set-card settings-actions">
+              <h4>Экспорт и импорт</h4>
           <button type="button" id="exportBtn" class="primary-btn"><svg><use href="#i-download"/></svg> Экспортировать бэкап (.json)</button>
           <button type="button" id="exportEncBtn" class="secondary-btn"><svg><use href="#i-lock"/></svg> Зашифрованный бэкап (.fdbak)</button>
           <label class="secondary-btn import-label"><svg><use href="#i-upload"/></svg> Импортировать бэкап<input id="importInput" type="file" accept="application/json,.json,.fdbak" hidden></label>
-          <div class="restore-row"><svg class="ic"><use href="#i-history"/></svg><select id="snapshotSelect" class="select" aria-label="Точка восстановления"><option value="">Точки восстановления…</option></select><button type="button" id="snapshotRestoreBtn" class="secondary-btn">Откатить</button></div>
-          <button type="button" id="clearDoneBtn" class="secondary-btn">Очистить завершённые задачи</button>
-          <button type="button" id="resetAllBtn" class="danger-btn">Удалить все данные…</button>
+          
+            </div>
+            <div class="set-card settings-actions">
+              <h4>Точки восстановления</h4>
+              <div class="restore-row"><svg class="ic"><use href="#i-history"/></svg><select id="snapshotSelect" class="select" aria-label="Точка восстановления"><option value="">Точки восстановления…</option></select><button type="button" id="snapshotRestoreBtn" class="secondary-btn">Откатить</button></div>
+              <small class="set-note">Автокопия раз в день и перед каждым импортом. Откат сам сделает точку «перед откатом».</small>
+            </div>
+            <div class="set-card settings-actions">
+              <h4>Уборка</h4>
+              <button type="button" id="clearDoneBtn" class="secondary-btn">Очистить завершённые задачи</button>
+              <button type="button" id="resetAllBtn" class="danger-btn">Удалить все данные…</button>
+            </div>
+            <div class="settings-foot"><span id="taskDataCount">0 задач</span><span>Focusday 1.3.3 · работает офлайн</span></div>
+          </section>
         </div>
-        <div class="settings-foot"><span id="taskDataCount">0 задач</span><span>Focusday · работает офлайн</span></div>
       </div>
       <div class="modal-actions"><button type="button" class="secondary-btn" data-close-modal>Готово</button></div>
     </section>

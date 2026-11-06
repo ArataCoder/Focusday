@@ -27,6 +27,13 @@ export function checkHabitByName(name, min) {
   persist(); renderAll(); checkAchievements(); playSound('success');
   toast(created ? `Новая привычка «${h.name}» — и сразу первая отметка ✦` : `${h.name}: ${min ? 'минимум засчитан — это тоже победа' : 'отмечено'} ✦`);
 }
+// Границы недели — локальные календарные дни, а не фиксированные 168 часов:
+// при переходе на летнее/зимнее время неделя может длиться 167 или 169 часов.
+export function weekHasPause(mon, pauses) {
+  const start = new Date(mon); start.setHours(0, 0, 0, 0);
+  const end = addDays(start, 7);
+  return pauses.some(([from, to]) => Number(from) < end.getTime() && Number(to) > start.getTime());
+}
 export function habitStats(h) {
   const today = fromISO(todayISO()); let last7 = 0;
   for (let i = 0; i < 7; i++) if (h.log[toISO(addDays(today, -i))]) last7++;
@@ -34,7 +41,7 @@ export function habitStats(h) {
   const thisMon = mondayOf(today), thisWeek = weekCount(thisMon);
   let streak = thisWeek >= h.target ? 1 : 0;
   const pauses = [...(h.pauses || []), ...(h.paused && h.pausedAt ? [[h.pausedAt, Date.now()]] : [])];
-  const pausedWeek = (mon) => { const a = mon.getTime() - 432e5, z = a + 7 * 864e5; return pauses.some(([f, t]) => f < z && t >= a); };
+  const pausedWeek = (mon) => weekHasPause(mon, pauses);
   for (let w = 1; w < 104; w++) { const mon = addDays(thisMon, -7 * w); if (weekCount(mon) >= h.target) streak++; else if (pausedWeek(mon)) continue; else break; }
   return { last7, thisWeek, streak, total: Object.keys(h.log).length, pct: Math.min(1, thisWeek / h.target) };
 }

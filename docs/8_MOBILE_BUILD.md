@@ -19,7 +19,7 @@
 ## Путь 1 — PWA (рекомендую начать с него)
 1. Залить на GitHub (уже есть для EXE) → dash.cloudflare.com → Workers & Pages → Create → Pages → Connect to Git → репозиторий.
    Build command: `npm run bundle`, Output directory: `src`.
-2. Получишь `https://focusday-xxx.pages.dev`.
+2. Открой `https://focusday-xxx.pages.dev/focusday.html` (корень сайта может не содержать главную страницу).
 3. Android (Chrome): ⋮ → «Установить приложение». iPhone (Safari): «Поделиться» → «На экран Домой».
 4. Настройки → Синхронизация → тот же Supabase и пароль, что на ПК.
 

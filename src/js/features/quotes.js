@@ -6,7 +6,7 @@ import { data, persist } from '../state.js';
 import { toast } from '../render.js';
 import { QUOTE_CATS, QUOTE_LIBRARY } from './quotes-data.js';
 
-export const ROTATE_MS = 5 * 60e3, AWAY_MS = 150e3;
+export const ROTATE_MS = 5 * 60e3, AWAY_MS = 150e3, RECENT_MAX = 150, FAV_SHARE = 0.25;
 const DEFAULT_CATS = { gentle: true, action: true, dc: true, anime: true, samurai: true, classic: true, custom: true };
 let hiddenAt = 0, current = null;
 
@@ -15,7 +15,8 @@ export function ensureQuotes(d = data) {
   q.cats = { ...DEFAULT_CATS, ...(q.cats || {}) };
   q.showDeep = !!q.showDeep;
   q.hidden = Array.isArray(q.hidden) ? q.hidden.filter(x => typeof x === 'string') : [];
-  q.recent = Array.isArray(q.recent) ? q.recent.slice(-12) : [];
+  q.recent = Array.isArray(q.recent) ? q.recent.filter(x => typeof x === 'string').slice(-RECENT_MAX) : [];
+  q.fav = Array.isArray(q.fav) ? q.fav.filter(x => typeof x === 'string') : [];
   q.custom = Array.isArray(q.custom) ? q.custom.filter(x => x && typeof x.text === 'string') : [];
   // миграция v1.x: data.customQuotes = ['строка', …]
   if (Array.isArray(d.customQuotes) && d.customQuotes.length) {
@@ -45,23 +46,41 @@ export function quotePool(q = ensureQuotes()) {
   return [...QUOTE_LIBRARY, ...q.custom].filter(x => q.cats[x.cat] !== false && (q.showDeep || x.tone !== 'deep') && !q.hidden.includes(x.id));
 }
 
-/** Выбор без повторов подряд: исключаем текущую и последние ~N показанных. */
+/** Выбор: без повторов среди последних 150 показанных; категории уравновешены (√размера),
+    чтобы большой пак «Поддержка» не вытеснял Самураев и DC; избранные — примерно каждая 4-я. */
 export function pickQuote(q = ensureQuotes(), rnd = Math.random) {
   const pool = quotePool(q); if (!pool.length) return null;
-  const avoid = new Set(q.recent.slice(-Math.min(8, pool.length - 1)));
-  const fresh = pool.filter(x => !avoid.has(x.id));
-  const list = fresh.length ? fresh : pool.filter(x => x.id !== q.recent.at(-1));
-  const pick = (list.length ? list : pool)[Math.floor(rnd() * (list.length || pool.length))];
-  q.recent = [...q.recent, pick.id].slice(-12); q.changedAt = Date.now(); q.currentId = pick.id;
+  const avoid = new Set(q.recent.slice(-Math.min(RECENT_MAX, pool.length - 1)));
+  let list = pool.filter(x => !avoid.has(x.id));
+  if (!list.length) list = pool.filter(x => x.id !== q.recent.at(-1));
+  if (!list.length) list = pool;
+  const favs = list.filter(x => q.fav.includes(x.id));
+  let pick;
+  if (favs.length && rnd() < FAV_SHARE) pick = favs[Math.floor(rnd() * favs.length)];
+  else {
+    const by = new Map(); for (const x of list) { if (!by.has(x.cat)) by.set(x.cat, []); by.get(x.cat).push(x); }
+    const groups = [...by.values()], w = groups.map(g => Math.sqrt(g.length));
+    let r = rnd() * w.reduce((a, b) => a + b, 0), i = 0;
+    while (i < groups.length - 1 && (r -= w[i]) >= 0) i++;
+    pick = groups[i][Math.floor(rnd() * groups[i].length)];
+  }
+  q.recent = [...q.recent, pick.id].slice(-RECENT_MAX); q.changedAt = Date.now(); q.currentId = pick.id;
   return pick;
 }
+export function toggleFavQuote() {
+  if (!current) return; const q = ensureQuotes(), on = !q.fav.includes(current.id);
+  q.fav = on ? [...q.fav, current.id] : q.fav.filter(x => x !== current.id);
+  persist(); paintFav(); renderQuoteSettings();
+  toast(on ? 'В избранном — будет попадаться чаще ❤' : 'Убрано из избранного');
+}
+function paintFav() { const b = $('#quoteFav'); if (!b) return; const on = !!current && ensureQuotes().fav.includes(current.id); b.setAttribute('aria-pressed', String(on)); b.classList.toggle('on', on); }
 
 function paint(x, animate) {
   const card = $('.quote-card'), p = $('#dailyQuote'), au = $('#quoteAuthor'); if (!card || !p) return;
   const apply = () => {
     if (!x) { p.textContent = 'Все цитаты скрыты фильтром — загляни в настройки.'; au.innerHTML = ''; }
     else { p.textContent = `«${x.text}»`; au.innerHTML = `<b>${esc(x.author)}</b>${x.source ? ' · ' + esc(x.source) : ''}`; }
-    card.dataset.cat = x?.cat || ''; card.classList.remove('swap');
+    card.dataset.cat = x?.cat || ''; card.classList.remove('swap'); paintFav();
   };
   if (animate && !matchMedia('(prefers-reduced-motion: reduce)').matches) { card.classList.add('swap'); setTimeout(apply, 320); } else apply();
 }
@@ -94,9 +113,11 @@ export async function importQuotesFromJSON(file) {
 export function renderQuoteSettings() {
   const box = $('#quoteCats'); if (!box) return; const q = ensureQuotes();
   const cats = { ...QUOTE_CATS, ...(q.custom.length ? { custom: 'Мои' } : {}) };
-  box.innerHTML = Object.entries(cats).map(([k, n]) => `<button type="button" class="chip-toggle" data-qcat="${k}" aria-pressed="${q.cats[k] !== false}">${esc(n)}</button>`).join('');
+  const count = (k) => (k === 'custom' ? q.custom : QUOTE_LIBRARY).filter(x => x.cat === k && (q.showDeep || x.tone !== 'deep')).length;
+  box.innerHTML = Object.entries(cats).map(([k, n]) => `<button type="button" class="chip-toggle" data-qcat="${k}" aria-pressed="${q.cats[k] !== false}">${esc(n)} <small>${count(k)}</small></button>`).join('');
   const deep = $('#quoteDeep'); if (deep) deep.setAttribute('aria-pressed', String(q.showDeep));
-  const info = $('#quoteInfo'); if (info) info.textContent = `${quotePool(q).length} в ротации · скрыто ${q.hidden.length}${q.custom.length ? ' · своих ' + q.custom.length : ''}`;
+  const info = $('#quoteInfo'); if (info) info.textContent = `${quotePool(q).length} из ${QUOTE_LIBRARY.length + q.custom.length} в ротации · избранных ${q.fav.length} · скрыто ${q.hidden.length}${q.custom.length ? ' · своих ' + q.custom.length : ''}`;
+  const cc = $('#quoteCustomClear'); if (cc) cc.hidden = !q.custom.length;
   const un = $('#quoteUnhide'); if (un) un.hidden = !q.hidden.length;
 }
 
@@ -104,6 +125,9 @@ export function bindQuotes() {
   ensureQuotes();
   $('#quoteNext')?.addEventListener('click', () => showNextQuote(true));
   $('#quoteHide')?.addEventListener('click', hideCurrentQuote);
+  $('#quoteFav')?.addEventListener('click', toggleFavQuote);
+  $('#quoteCustomClear')?.addEventListener('click', () => { const q = ensureQuotes(), n = q.custom.length, keep = q.custom; q.custom = []; persist(); renderQuoteSettings(); if (current?.cat === 'custom') showNextQuote(true);
+    toast(`Удалено своих цитат: ${n}`, 'success', { label: 'Вернуть', onClick: () => { ensureQuotes().custom = keep; persist(); renderQuoteSettings(); } }); });
   $('#quoteCats')?.addEventListener('click', e => { const b = e.target.closest('[data-qcat]'); if (!b) return; const q = ensureQuotes(); q.cats[b.dataset.qcat] = q.cats[b.dataset.qcat] === false; persist(); renderQuoteSettings(); if (current && !quotePool(q).some(x => x.id === current.id)) showNextQuote(true); });
   $('#quoteDeep')?.addEventListener('click', () => { const q = ensureQuotes(); q.showDeep = !q.showDeep; persist(); renderQuoteSettings(); if (!q.showDeep && current?.tone === 'deep') showNextQuote(true); });
   $('#quoteUnhide')?.addEventListener('click', () => { const q = ensureQuotes(); q.hidden = []; persist(); renderQuoteSettings(); toast('Скрытые цитаты снова в ротации'); });

@@ -8,6 +8,7 @@ import { $, storage } from './core.js';
 import { renderProgress } from './progress.js';
 import { renderAll, toast } from './render.js';
 import { data, persistNow, set_data } from './state.js';
+import { openSettings } from './features/settings.js';
 import { deriveVaultKey, forgetKey, loadKey, openVault, randomSalt, saveKey, sealVault, vaultHeader } from './features/vault.js';
 
 export const SYNC_FILE = 'focusday_data.json';
@@ -145,7 +146,7 @@ export const SyncEngine = {
 /* Совместимость со старыми вызовами (state.persistNow → Sync.schedule, кнопка #syncSetupBtn). */
 export const Sync = {
   available: () => true,
-  setup: () => { $('#syncGroup')?.setAttribute('open', ''); $('#vaultPass')?.focus(); },
+  setup: () => { openSettings('sync'); setTimeout(() => $('#vaultPass')?.focus(), 60); },
   pull: () => SyncEngine.syncNow('focus'),
   push: () => SyncEngine.syncNow('manual'),
   schedule: () => SyncEngine.mark(),

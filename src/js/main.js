@@ -14,6 +14,7 @@ import { bindAmbient, ensureAmbient } from './features/ambient.js';
 import { bindBuddy, ensureBuddy, buddyTick, buddyAction } from './features/companion.js';
 import { bindPalette } from './features/palette.js';
 import { bindSoftPlan } from './features/softplan.js';
+import { bindSettings } from './features/settings.js';
 
 export function updateSettingsCount() {
   $('#taskDataCount').textContent = `${data.tasks.length} ${plural(data.tasks.length, ['задача', 'задачи', 'задач'])} · ${data.lists.length} ${plural(data.lists.length, ['список', 'списка', 'списков'])}`;
@@ -31,7 +32,7 @@ export function init() {
   ensureLife(); ensureQuotes(); ensureAmbient(); ensureBuddy();
   bindEvents(); bindAdhd(); bindProgress(); bindLife();
   safe('quotes', bindQuotes); safe('ambient', bindAmbient); safe('companion', bindBuddy);
-  safe('palette', bindPalette); safe('softplan', bindSoftPlan); safe('sync-ui', bindSyncUI);
+  safe('palette', bindPalette); safe('softplan', bindSoftPlan); safe('sync-ui', bindSyncUI); safe('settings', bindSettings);
   initProgress();
   document.body.classList.toggle('compress-mode', !!data.compress);
   $('#compressBtn')?.setAttribute('aria-pressed', String(!!data.compress));
