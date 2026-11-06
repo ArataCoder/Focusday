@@ -14,5 +14,5 @@ test('Tauri: главное окно и локальные ресурсы сущ
     assert.ok(html.includes(`"${file}"`), `главная страница ссылается на ${file}`);
     await access(resolve(root, file));
   }
-  for (const file of ['overlay.html', 'quick.html', 'buddy.html']) await access(resolve(root, file));
+  for (const file of ['overlay.html', 'quick.html', 'buddy.html', 'buddy.js']) await access(resolve(root, file));
 });

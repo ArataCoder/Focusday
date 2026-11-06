@@ -9,6 +9,8 @@
   const { emit, listen } = T.event;
   // v1.3: убран навязчивый виджет «каждые 5 минут». Теперь будит котик — только при реальном простое.
   let lastState = null, lastBuddy = { mode: 'hidden' }, buddySize = 'hidden';
+  let buddyQueue = Promise.resolve();
+  const buddyVisibleListeners = new Set();
   const sizeOf = (mode) => mode === 'hidden' ? 'hidden' : (mode === 'idle' || mode === 'purr') ? 'small' : 'large';
 
   window.focusdayDesktop = {
@@ -18,11 +20,18 @@
     // Системный простой (секунды без мыши/клавиатуры во ВСЕХ программах). null — платформа не умеет.
     idleSeconds: () => invoke('idle_seconds'),
     // Котик-компаньон в отдельном окне поверх всех программ. Окно меняет размер только при смене класса.
-    buddy: async (state) => {
-      lastBuddy = state; emit('focusday://buddy-state', state);
-      const size = sizeOf(state.mode);
-      if (size !== buddySize) { buddySize = size; await invoke('buddy', { mode: size }); emit('focusday://buddy-state', state); }
+    buddy: (state) => {
+      lastBuddy = state;
+      // Сериализуем создание/изменение окна, чтобы быстрая пауза не обогнала запуск.
+      const op = buddyQueue.then(async () => {
+        const size = sizeOf(lastBuddy.mode);
+        if (size !== buddySize) { await invoke('buddy', { mode: size }); buddySize = size; }
+        await emit('focusday://buddy-state', lastBuddy);
+      });
+      buddyQueue = op.catch(() => {}); // ошибка не блокирует следующую попытку
+      return op;
     },
+    onBuddyVisible: (cb) => { buddyVisibleListeners.add(cb); return () => buddyVisibleListeners.delete(cb); },
     onBuddyAction: (cb) => listen('focusday://buddy-action', (e) => cb(e.payload)),
     attention: () => invoke('attention').catch(() => {}),
     overlayAction: (action) => emit('focusday://overlay-action', action),
@@ -38,6 +47,7 @@
   // Оверлей открылся позже главного окна — отдать ему актуальное состояние.
   listen('focusday://overlay-ready', () => { if (lastState) emit('focusday://state', lastState); });
   listen('focusday://buddy-ready', () => emit('focusday://buddy-state', lastBuddy));
+  listen('focusday://buddy-visible', (e) => { for (const cb of buddyVisibleListeners) cb(e.payload); });
 
   // Нативные Windows-уведомления (Action Center) вместо Web Notification API.
   const N = T.notification;

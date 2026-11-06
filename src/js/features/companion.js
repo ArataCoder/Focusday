@@ -59,14 +59,19 @@ function state() {
   if (mode === 'purr') st.text = `Мур. Я рядом. Осталось ${Math.ceil(left / 60000)} мин — работаем 🐾`;
   return st;
 }
+let separateVisible = false;
+function paintLocal() {
+  const useWindow = !!desktop()?.buddy && separateVisible && mode !== 'hidden';
+  document.body.classList.toggle('desktop-buddy', useWindow);
+  if (root) paintCat(root, useWindow ? { mode: 'hidden' } : state());
+}
 function paint() {
   const st = state();
-  const useWindow = !!desktop()?.buddy;
-  document.body.classList.toggle('desktop-buddy', useWindow);
-  if (root) paintCat(root, useWindow ? { mode: 'hidden' } : st);
-  if (useWindow) desktop().buddy(st).catch?.(() => {});
+  // Если отдельное окно не появилось или не ответило, котик остаётся в главном.
+  paintLocal();
+  if (desktop()?.buddy) desktop().buddy(st).catch(err => { separateVisible = false; paintLocal(); console.error('Focusday: окно котика недоступно', err); });
 }
-function setMode(m) { if (m === mode) return; mode = m; paint(); }
+function setMode(m) { if (m === mode) return; mode = m; separateVisible = false; paint(); }
 
 /* Пауза с возвратом простоя: минуты, пока тебя не было, не засчитываются в фокус. */
 function pauseWithRefund(now = Date.now()) {
@@ -149,6 +154,7 @@ export function bindBuddy() {
   ensureBuddy();
   root = $('#catBuddy'); if (root) mountCat(root, buddyAction);
   desktop()?.onBuddyAction?.(buddyAction);
+  desktop()?.onBuddyVisible?.(st => { if (mode !== 'hidden' && st?.mode === mode) { separateVisible = true; paintLocal(); } });
   $('#buddyEnabled')?.addEventListener('click', () => { const b = ensureBuddy(); b.enabled = !b.enabled; persist(); renderBuddySettings(); buddyTick(); });
   $('#buddyNudge')?.addEventListener('click', () => { const b = ensureBuddy(); b.idleNudge = !b.idleNudge; persist(); renderBuddySettings(); });
   $('#buddyIdleMin')?.addEventListener('change', (e) => { ensureBuddy().idleMin = +e.target.value; persist(); if (webIdle.detector) enableWebIdle(false); renderBuddySettings(); });

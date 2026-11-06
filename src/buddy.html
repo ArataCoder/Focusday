@@ -16,17 +16,6 @@
 </head>
 <body>
 <div class="cat-buddy" id="catBuddy" hidden></div>
-<script type="module">
-  import { mountCat, paintCat } from './js/features/cat-ui.js';
-  const T = window.__TAURI__, root = document.getElementById('catBuddy');
-  let last = { mode: 'hidden' };
-  const send = (a) => T?.event.emit('focusday://buddy-action', a);
-  mountCat(root, send);
-  const paint = (st) => { last = st || { mode: 'hidden' }; paintCat(root, last); };
-  T?.event.listen('focusday://buddy-state', (e) => paint(e.payload));
-  setInterval(() => { if (last.mode === 'break') paintCat(root, last); }, 1000);  // обратный отсчёт перерыва
-  T?.event.emit('focusday://buddy-ready');
-  if (!T) paint({ mode: 'idle' });   // открыли файл в браузере — просто показать котика
-</script>
+<script type="module" src="buddy.js"></script>
 </body>
 </html>

@@ -25,7 +25,7 @@ try {
   await page.evaluate(async () => { await navigator.serviceWorker.ready; });
   await page.reload(); await page.waitForFunction(() => navigator.serviceWorker.controller && window.__FD_TEST__);
   assert.equal(await page.evaluate(async () => (await fetch('/')).status),404);
-  const cached = await page.evaluate(async () => { const c = await caches.open('focusday-1.3.3'); return Promise.all(['focusday.html','focusday.css','focusday.js','manifest.webmanifest','icons/maskable-512.png'].map(async x=>!!(await c.match(x)))); });
+  const cached = await page.evaluate(async () => { const c = await caches.open('focusday-1.3.4'); return Promise.all(['focusday.html','focusday.css','focusday.js','manifest.webmanifest','icons/maskable-512.png'].map(async x=>!!(await c.match(x)))); });
   assert.deepEqual(cached, [true,true,true,true,true]);
   await ctx.setOffline(true); await page.reload(); await page.waitForFunction(() => window.__FD_TEST__);
   assert.equal(await page.title(), 'Focusday — дневник задач');

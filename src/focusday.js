@@ -5506,17 +5506,25 @@ g Не порти то, что имеешь, желанием того, чего
     if (mode === "purr") st.text = `Мур. Я рядом. Осталось ${Math.ceil(left / 6e4)} мин — работаем 🐾`;
     return st;
   }
+  var separateVisible = false;
+  function paintLocal() {
+    const useWindow = !!desktop()?.buddy && separateVisible && mode !== "hidden";
+    document.body.classList.toggle("desktop-buddy", useWindow);
+    if (root) paintCat(root, useWindow ? { mode: "hidden" } : state());
+  }
   function paint3() {
     const st = state();
-    const useWindow = !!desktop()?.buddy;
-    document.body.classList.toggle("desktop-buddy", useWindow);
-    if (root) paintCat(root, useWindow ? { mode: "hidden" } : st);
-    if (useWindow) desktop().buddy(st).catch?.(() => {
+    paintLocal();
+    if (desktop()?.buddy) desktop().buddy(st).catch((err) => {
+      separateVisible = false;
+      paintLocal();
+      console.error("Focusday: окно котика недоступно", err);
     });
   }
   function setMode(m) {
     if (m === mode) return;
     mode = m;
+    separateVisible = false;
     paint3();
   }
   function pauseWithRefund(now = Date.now()) {
@@ -5670,6 +5678,12 @@ g Не порти то, что имеешь, желанием того, чего
     root = $("#catBuddy");
     if (root) mountCat(root, buddyAction);
     desktop()?.onBuddyAction?.(buddyAction);
+    desktop()?.onBuddyVisible?.((st) => {
+      if (mode !== "hidden" && st?.mode === mode) {
+        separateVisible = true;
+        paintLocal();
+      }
+    });
     $("#buddyEnabled")?.addEventListener("click", () => {
       const b = ensureBuddy();
       b.enabled = !b.enabled;
