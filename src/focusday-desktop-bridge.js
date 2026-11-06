@@ -17,7 +17,7 @@
     buddyPhase = phase;
     for (const cb of buddyStatusListeners) cb({ phase, error });
   };
-  const sizeOf = (mode) => mode === 'hidden' ? 'hidden' : (mode === 'idle' || mode === 'purr') ? 'small' : 'large';
+  const sizeOf = (mode) => mode === 'hidden' ? 'hidden' : mode === 'idle' ? 'small' : 'large';
 
   window.focusdayDesktop = {
     platform: 'tauri',
