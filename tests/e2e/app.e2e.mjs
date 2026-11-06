@@ -191,7 +191,9 @@ await step('Регрессия: пауза таймера сохраняется
   await p.waitForFunction(remaining => { const d = JSON.parse(localStorage.getItem('focusday.data.v1') || '{}'); return !d.focusRunning && d.focusRemainingMs === remaining; }, stopped.focusRemainingMs, { timeout: 10000 });
   const persisted = await p.evaluate(() => JSON.parse(localStorage.getItem('focusday.data.v1')));
   assert.equal(persisted.focusRunning, false); assert.equal(persisted.focusRemainingMs, stopped.focusRemainingMs);
+  const beforeReload = await p.evaluate(() => ({ seed: sessionStorage.getItem('seeded'), stored: localStorage.getItem('focusday.data.v1') }));
   await p.reload(); await p.waitForFunction(() => window.__FD_TEST__); const after = await p.D();
+  if (after.focusRemainingMs !== stopped.focusRemainingMs) console.log('DIAG timer', JSON.stringify({beforeReload, afterReload: await p.evaluate(() => ({seed: sessionStorage.getItem('seeded'),stored: localStorage.getItem('focusday.data.v1')}))}));
   assert.equal(after.focusRunning, false); assert.equal(after.focusRemainingMs, stopped.focusRemainingMs);
   assert.deepEqual(p.errors, []);
 });
