@@ -35,7 +35,7 @@ test('Версия патча едина в настройках, сборке �
   const cargo = await readFile('src-tauri/Cargo.toml', 'utf8');
   const sw = await readFile('src/sw.js', 'utf8');
   const html = await readFile('src/focusday.html', 'utf8');
-  assert.equal(pkg.version, '1.3.7'); assert.equal(cfg.version, pkg.version);
+  assert.equal(pkg.version, '1.3.8'); assert.equal(cfg.version, pkg.version);
   assert.ok(cargo.includes(`version = "${pkg.version}"`));
   assert.ok(sw.includes(`focusday-${pkg.version}`));
   assert.ok(html.includes(`Focusday ${pkg.version} ·`));
