@@ -1,6 +1,6 @@
 /* Focusday · sw.js — офлайн-кэш оболочки приложения для PWA (телефон / «Установить приложение»).
    Данные пользователя здесь НЕ хранятся (они в localStorage/IndexedDB). Запросы к Supabase не кэшируются. */
-const VERSION = 'focusday-1.3.7';
+const VERSION = 'focusday-1.3.8';
 const SHELL = ['./focusday.html', './focusday.css', './cat.css', './focusday.js', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/maskable-512.png'];
 
