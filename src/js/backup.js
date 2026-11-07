@@ -62,7 +62,7 @@ export async function deriveKey(pass, salt) {
   const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 310000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
 }
-export const b64 = (u8) => btoa(String.fromCharCode(...u8));
+export const b64 = (u8) => { let text = ''; for (let i = 0; i < u8.length; i += 0x8000) text += String.fromCharCode(...u8.subarray(i, i + 0x8000)); return btoa(text); };
 export const unb64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 export async function encryptText(text, pass) {
   const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
@@ -160,7 +160,8 @@ export function importData(file) {
       $('#importMeta').innerHTML = `<div><span>Файл</span><strong>${esc(file.name)}</strong></div><div><span>Создан</span><strong>${esc(when)}</strong></div><div><span>Целостность</span><strong class="${res.integrity === 'mismatch' ? 'bad' : 'good'}">${res.integrity === 'ok' ? 'SHA-256 совпадает ✓' : res.integrity === 'mismatch' ? 'Контрольная сумма не совпала!' : 'старый формат, без подписи'}</strong></div>`;
       $('#importMeta').insertAdjacentHTML('beforeend', `<div><span>Привычки · финансы · мысли</span><strong>+${preview.lifeAdded || 0} новых · ${preview.lifeUpdated || 0} обновится</strong></div><div><span>В файле</span><strong>${(res.incoming.habits || []).length} привычек · ${(res.incoming.expenses || []).length} фин. записей · ${(res.incoming.thoughts || []).length} мыслей</strong></div>`);
       $('#importStats').innerHTML = [['Новых', preview.added, 'mint'], ['Обновится', preview.updated, 'sky'], ['Без изменений', preview.same, ''], ['Удалены ранее', preview.skippedDeleted + preview.removed, 'rose']].map(([l, n, c]) => `<div class="${c}"><strong>${n}</strong><span>${l}</span></div>`).join('');
-      showModal('importModal');
+      // Импорт открывается из настроек: иначе их окно перекроет подтверждение.
+      closeModals(); showModal('importModal');
     } catch (err) { toast(err.message || 'Не удалось прочитать файл', 'error'); }
   };
   reader.readAsText(file);
