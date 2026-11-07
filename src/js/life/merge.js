@@ -8,7 +8,7 @@ export function mergeById(a = [], b = [], deleted = {}, stats) {
     if (!x || !x.id) return; const mine = map.get(x.id);
     if (!mine) { if ((deleted[x.id] || 0) >= (x.updatedAt || 0)) return; map.set(x.id, x); stats.lifeAdded++; }
     else if ((x.updatedAt || 0) > (mine.updatedAt || 0)) { map.set(x.id, mine.log ? { ...x, log: { ...mine.log, ...x.log } } : x); stats.lifeUpdated++; }
-    else if (mine.log && x.log) { Object.entries(x.log).forEach(([d, v]) => { if (!mine.log[d]) mine.log[d] = v; }); }
+    else if (mine.log && x.log) { const log = { ...mine.log }; let changed = false; Object.entries(x.log).forEach(([d, v]) => { if (!log[d]) { log[d] = v; changed = true; } }); if (changed) { map.set(x.id, { ...mine, log }); stats.lifeUpdated++; } }
   });
   map.forEach((x, id) => { if ((deleted[id] || 0) > (x.updatedAt || 0)) map.delete(id); });
   return [...map.values()];
