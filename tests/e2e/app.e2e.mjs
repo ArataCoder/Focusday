@@ -2,10 +2,23 @@
 // CHROMIUM_PATH=/path/to/chrome — если браузер Playwright не установлен (npx playwright install chromium).
 import { chromium } from 'playwright';
 import { buildSync } from 'esbuild';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import { createServer } from 'node:http';
+import { readFile } from 'node:fs/promises';
+import { resolve, extname, sep } from 'node:path';
 import assert from 'node:assert/strict';
 
-const APP = pathToFileURL(fileURLToPath(new URL('../../src/focusday.html', import.meta.url))).href;
+// file:// может терять localStorage при перезагрузке в Chromium; localhost даёт стабильное происхождение.
+const root = fileURLToPath(new URL('../../src/', import.meta.url));
+const mime = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.webmanifest':'application/manifest+json'};
+const server = createServer(async (req, res) => {
+  const path = resolve(root, '.' + decodeURIComponent(new URL(req.url,'http://localhost').pathname));
+  if (!path.startsWith(root.replace(/\/$/, '') + sep)) { res.writeHead(403).end(); return; }
+  try { const body = await readFile(path); res.writeHead(200, {'Content-Type':mime[extname(path)] || 'application/octet-stream'}).end(body); }
+  catch { res.writeHead(404).end(); }
+});
+await new Promise(r => server.listen(0, '127.0.0.1', r));
+const APP = `http://127.0.0.1:${server.address().port}/focusday.html`;
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
 const iso = (d) => { const x = new Date(); x.setDate(x.getDate() + d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };
 const task = (id, title, date) => ({ id, title, date, status: 'todo', priority: 2, duration: 15, listId: 'inbox', createdAt: Date.now(), updatedAt: Date.now(), steps: [] });
@@ -18,7 +31,7 @@ async function step(name, fn) {
 async function open(ctx, d) {
   const p = await ctx.newPage(); const errors = [];
   p.on('pageerror', (e) => errors.push(e.message));
-  await p.addInitScript((d) => { window.__FD_TEST_IDLE__ = 0; if (!sessionStorage.getItem('seeded')) { localStorage.setItem('focusday.data.v1', JSON.stringify(d)); sessionStorage.setItem('seeded', '1'); } }, d);
+  await p.addInitScript((d) => { window.__FD_TEST_IDLE__ = 0; if (!localStorage.getItem('focusday.test.seeded')) { localStorage.setItem('focusday.data.v1', JSON.stringify(d)); localStorage.setItem('focusday.test.seeded', '1'); } }, d);
   await p.goto(APP); await p.waitForFunction(() => window.__FD_TEST__);
   p.errors = errors; p.D = () => p.evaluate(() => JSON.parse(JSON.stringify(window.__FD_TEST__.data)));
   return p;
@@ -154,6 +167,14 @@ await step('Синхронизация ПК ⇄ телефон через Supaba
   assert.deepEqual(await titles(pc), ['Задача с ПК', 'Мысль с телефона']);
   assert.ok(row && !/Задача с ПК|Мысль с телефона/.test(row.blob), 'на сервере только шифротекст');
   assert.ok(!seen.some((b) => b.includes('общий-пароль')), 'пароль синхронизации не уходит в сеть');
+  // Если поменялись только цитаты, слияние не должно игнорировать их из-за нулевого числа изменённых задач.
+  await phone.keyboard.press('Escape'); await phone.click('#quoteHide');
+  const hiddenId = (await phone.D()).quotes.hidden[0], oldRev = row.rev;
+  await phone.click('#settingsBtn'); await phone.click('[data-set-tab="sync"]'); await phone.click('#syncNowBtn');
+  const until = Date.now() + 15000; while (row.rev <= oldRev && Date.now() < until) await new Promise(r=>setTimeout(r,100));
+  assert.ok(row.rev > oldRev, 'телефон отправил изменение цитат');
+  await pc.click('#syncNowBtn');
+  await pc.waitForFunction(id => window.__FD_TEST__.data.quotes?.hidden?.includes(id), hiddenId, {timeout:15000});
 });
 
 await step('Регрессия: палитра мышью и стрелками, ARIA, отсутствие исключений', async () => {
@@ -182,6 +203,21 @@ await step('Регрессия: разметка и настройки, ARIA и 
   assert.deepEqual(p.errors, []);
 });
 
+await step('Резервная копия: экспорт и импорт задачи на другом устройстве', async () => {
+  const source = await open(await browser.newContext(), seed([task('backup-1','Задача из бэкапа',iso(0))]));
+  await source.click('#settingsBtn'); await source.click('[data-set-tab="data"]');
+  const [download] = await Promise.all([source.waitForEvent('download'), source.click('#exportBtn')]);
+  const path = await download.path(); assert.ok(path, 'файл бэкапа создан');
+  const destination = await open(await browser.newContext(), seed([]));
+  await destination.click('#settingsBtn'); await destination.click('[data-set-tab="data"]');
+  await destination.locator('#importInput').setInputFiles(path);
+  await destination.waitForSelector('#importModal:not([hidden])');
+  assert.match(await destination.locator('#importMeta').textContent(), /SHA-256 совпадает/);
+  await destination.click('#importMergeBtn');
+  assert.ok((await destination.D()).tasks.some(t=>t.id==='backup-1' && t.title==='Задача из бэкапа'));
+  assert.deepEqual(destination.errors,[]);
+});
+
 await step('Регрессия: пауза таймера сохраняется после тика и перезагрузки', async () => {
   const p = await open(await browser.newContext(), seed([]));
   await p.click('#focusStartBtn'); await p.waitForTimeout(300); await p.click('#focusStartBtn');
@@ -191,9 +227,7 @@ await step('Регрессия: пауза таймера сохраняется
   await p.waitForFunction(remaining => { const d = JSON.parse(localStorage.getItem('focusday.data.v1') || '{}'); return !d.focusRunning && d.focusRemainingMs === remaining; }, stopped.focusRemainingMs, { timeout: 10000 });
   const persisted = await p.evaluate(() => JSON.parse(localStorage.getItem('focusday.data.v1')));
   assert.equal(persisted.focusRunning, false); assert.equal(persisted.focusRemainingMs, stopped.focusRemainingMs);
-  const beforeReload = await p.evaluate(() => ({ seed: sessionStorage.getItem('seeded'), stored: localStorage.getItem('focusday.data.v1') }));
   await p.reload(); await p.waitForFunction(() => window.__FD_TEST__); const after = await p.D();
-  if (after.focusRemainingMs !== stopped.focusRemainingMs) console.log('DIAG timer', JSON.stringify({beforeReload, afterReload: await p.evaluate(() => ({seed: sessionStorage.getItem('seeded'),stored: localStorage.getItem('focusday.data.v1')}))}));
   assert.equal(after.focusRunning, false); assert.equal(after.focusRemainingMs, stopped.focusRemainingMs);
   assert.deepEqual(p.errors, []);
 });
@@ -210,6 +244,6 @@ await step('Регрессия: XP при переносе и сбросе бе�
   assert.deepEqual(p.errors, []);
 });
 
-await browser.close();
+await browser.close(); await new Promise(r => server.close(r));
 console.log(failed ? `\n${failed} тест(ов) упало` : '\nВсе E2E-тесты прошли');
 process.exit(failed ? 1 : 0);
