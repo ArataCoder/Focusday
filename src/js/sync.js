@@ -64,7 +64,7 @@ export const Cloud = {
 /* ── Провайдер «папка» (Tauri: sync_read / sync_write, атомарная запись) ── */
 const Folder = {
   available: () => !!window.focusdayDesktop?.syncWrite,
-  read: (c) => window.focusdayDesktop.syncRead(c.folder.dir, SYNC_FILE).then(s => s ? { blob: s } : null),
+  read: (c) => window.focusdayDesktop.syncRead(c.folder.dir, SYNC_FILE).then(s => s == null ? null : { blob: s }),
   write: (c, blob) => window.focusdayDesktop.syncWrite(c.folder.dir, SYNC_FILE, blob).then(() => true)
 };
 
@@ -73,7 +73,7 @@ function cleanPayload() {
   return { app: 'Focusday', schema: 5, at: Date.now(), device: deviceId, data: clean };
 }
 
-let pendingPass = '', running = false, dirty = false, pushTimer = null;
+let pendingPass = '', running = false, dirty = false, changeSeq = 0, pushTimer = null;
 export const SyncEngine = {
   enabled() { const c = syncCfg(); return !!((c.folder.enabled && c.folder.dir) || (c.cloud.enabled && c.cloud.session)); },
   setPassphrase(p) { pendingPass = String(p || ''); },
@@ -85,20 +85,22 @@ export const SyncEngine = {
     return { ...rec, fresh: true };
   },
   status(text, kind = '') { const el = $('#syncStatus'); if (el) { el.textContent = text; el.dataset.kind = kind; } const c = syncCfg(); c.lastStatus = text; saveSyncCfg(c); },
-  mark() { dirty = true; if (!this.enabled()) return; clearTimeout(pushTimer); pushTimer = setTimeout(() => this.syncNow('change').catch(console.error), PUSH_DEBOUNCE); },
+  mark() { dirty = true; changeSeq++; if (!this.enabled()) return; clearTimeout(pushTimer); pushTimer = setTimeout(() => this.syncNow('change').catch(console.error), PUSH_DEBOUNCE); },
 
   /** Полный цикл: pull → расшифровать → слить → push (если есть что отдать). */
   async syncNow(reason = 'auto') {
     if (running || !this.enabled()) return { skipped: true };
-    running = true; const c = syncCfg(); const result = { merged: 0, pushed: [] };
+    running = true; const c = syncCfg(); const result = { merged: 0, pushed: [] }; const startedSeq = changeSeq;
     try {
       const providers = [];
       if (c.folder.enabled && c.folder.dir && Folder.available()) providers.push(['folder', Folder]);
       if (c.cloud.enabled && c.cloud.session) providers.push(['cloud', Cloud]);
       for (const [name, p] of providers) {
+        let complete = false;
         for (let attempt = 0; attempt < 3; attempt++) {
           const remote = await p.read(c);
           const head = remote ? vaultHeader(remote.blob) : null;
+          if (remote && !head) throw new Error('Файл синхронизации повреждён или имеет неизвестный формат; запись остановлена');
           const k = await this.key(head?.kdf?.salt);
           if (!k) { this.status('Нужен пароль синхронизации — введи его в настройках', 'warn'); return { needPass: true }; }
           let changed = false;
@@ -110,7 +112,7 @@ export const SyncEngine = {
             if (payload.device !== deviceId || (payload.at || 0) > (c.seen[name] || 0)) {
               const { merged, stats } = mergeData(data, payload.data);
               const n = stats.added + stats.updated + stats.removed + (stats.lifeAdded || 0) + (stats.lifeUpdated || 0);
-              if (n) { set_data(merged); rebaseline(); persistNow(true); renderAll(); renderProgress(); result.merged += n; changed = true; }
+              if (JSON.stringify(merged) !== JSON.stringify(data)) { set_data(merged); rebaseline(); persistNow(true); renderAll(); renderProgress(); result.merged += n || 1; changed = true; }
             }
             c.seen[name] = payload.at || Date.now();
           } else if (k.fresh) { await saveKey({ salt: k.salt, key: k.key }); pendingPass = ''; }
@@ -120,13 +122,15 @@ export const SyncEngine = {
             if (ok === false) continue;                       // конфликт ревизий → перечитать и слить ещё раз
             c.seen[name] = pl.at; result.pushed.push(name);
           }
-          break;
+          complete = true; break;
         }
+        if (!complete) throw new Error('Конфликт синхронизации: изменения не отправлены, попробуй ещё раз');
       }
-      dirty = false; c.lastSyncAt = Date.now(); saveSyncCfg(c);
+      dirty = changeSeq !== startedSeq; c.lastSyncAt = Date.now(); saveSyncCfg(c);
       const where = providers.map(([n]) => n === 'folder' ? 'папка' : 'облако').join(' + ');
       this.status(`${where} · ${new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}${result.merged ? ` · получено изменений: ${result.merged}` : ''} · 🔒 E2E`, 'ok');
       if (result.merged && reason !== 'manual') toast(`Синхронизировано: ${result.merged} изменений с другого устройства`);
+      if (dirty) { clearTimeout(pushTimer); pushTimer = setTimeout(() => this.syncNow('change').catch(console.error), PUSH_DEBOUNCE); }
       return result;
     } catch (e) {
       this.status(`Синхронизация не удалась: ${e.message === 'session-expired' ? 'войди в облако заново' : e.message}`, 'error'); return { error: e.message };
