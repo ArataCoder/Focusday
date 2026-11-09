@@ -18,7 +18,8 @@ async function step(name, fn) {
 async function open(ctx, d) {
   const p = await ctx.newPage(); const errors = [];
   p.on('pageerror', (e) => errors.push(e.message));
-  await p.addInitScript((d) => { window.__FD_TEST_IDLE__ = 0; if (!sessionStorage.getItem('seeded')) { localStorage.setItem('focusday.data.v1', JSON.stringify(d)); sessionStorage.setItem('seeded', '1'); } }, d);
+  // На file:// reload может сбросить sessionStorage; сохранённые данные не перезаписываем.
+  await p.addInitScript((d) => { window.__FD_TEST_IDLE__ = 0; if (!localStorage.getItem('focusday.data.v1')) localStorage.setItem('focusday.data.v1', JSON.stringify(d)); }, d);
   await p.goto(APP); await p.waitForFunction(() => window.__FD_TEST__);
   p.errors = errors; p.D = () => p.evaluate(() => JSON.parse(JSON.stringify(window.__FD_TEST__.data)));
   return p;
@@ -191,6 +192,7 @@ await step('Регрессия: пауза таймера сохраняется
   await p.waitForFunction(remaining => { const d = JSON.parse(localStorage.getItem('focusday.data.v1') || '{}'); return !d.focusRunning && d.focusRemainingMs === remaining; }, stopped.focusRemainingMs, { timeout: 10000 });
   const persisted = await p.evaluate(() => JSON.parse(localStorage.getItem('focusday.data.v1')));
   assert.equal(persisted.focusRunning, false); assert.equal(persisted.focusRemainingMs, stopped.focusRemainingMs);
+  await p.evaluate(() => sessionStorage.clear()); // воспроизводим потерю sessionStorage на file://
   await p.reload(); await p.waitForFunction(() => window.__FD_TEST__); const after = await p.D();
   assert.equal(after.focusRunning, false); assert.equal(after.focusRemainingMs, stopped.focusRemainingMs);
   assert.deepEqual(p.errors, []);
