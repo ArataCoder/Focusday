@@ -15,27 +15,34 @@
 \* Ориентировочно, включая процессы WebView2/Chromium. **Inno Setup — это не альтернатива, а только упаковщик-установщик** (Tauri использует NSIS, это то же самое по смыслу).
 **Вывод:** Tauri — в 10–20 раз меньше файл и в 2 раза меньше памяти. Electron оправдан, только если нужен Node.js внутри приложения; Python — если основная логика уже на Python.
 
-## Вариант А — обновить через GitHub Desktop и Actions
-1. Перед обновлением экспортируй бэкап из работающей версии. Скачай и распакуй архив исходников 1.3.3 — не загружай сам ZIP в репозиторий.
-2. В GitHub Desktop клонируй существующий репозиторий, если он ещё не клонирован. В меню Repository → Show in Explorer открой его папку.
-3. Из распакованного архива скопируй содержимое в корень репозитория: `src`, `src-tauri`, `.github`, `tests`, `docs`, `package.json`, `build.mjs` и остальные файлы. Согласись на замену одинаковых файлов. Не удаляй папку `.git` и не копируй папку проекта целиком внутрь проекта. В корне GitHub должны быть видны `package.json`, `src` и `src-tauri`, а `.github/workflows/release.yml` — в папке `.github`.
-4. В GitHub Desktop посмотри Changes, напиши `Fix Windows startup 1.3.3`, нажми Commit to main (или свою рабочую ветку), затем Push origin. При необходимости выбери Pull origin перед Push. Если ветка защищена — создай pull request и дождись слияния.
-5. Открой репозиторий на GitHub → Actions → Release Windows → Run workflow → выбери ветку с последним коммитом → Run workflow. Обнови страницу и открой новый запуск. Работа может занять больше 10 минут. При ошибке открой красный job и пришли текст первого сообщения об ошибке.
-6. При успехе внизу запуска скачай Artifacts → Focusday-Windows.zip. Распакуй. `*-setup.exe` — установщик; `focusday.exe` — отдельный исполняемый файл; `.msi` — альтернативный установщик. Проверь новый файл на Windows до публикации.
-7. Теперь workflow создаёт черновик GitHub Release с тегом `v1.3.3`. В разделе Releases открой Draft, убедись, что в Assets есть установщик и при необходимости другие файлы, затем Publish release. До публикации проверь запуск, задачи, таймер и сохранение после полного выхода. Не создавай этот тег/опубликованный релиз заранее. Если `v1.3.3` уже существует как опубликованный релиз, сперва выбери новый номер версии в проекте — или сообщи об этом перед повторным запуском.
+## Вариант А — GitHub Actions (без локальной Windows-сборки)
 
-На Windows исполняемый файл должен быть **пересобран**: копирование HTML или исправление только исходников рядом с уже собранным EXE не меняет встроенные в него ресурсы. Если draft не появился, не публикуй старый EXE: скачай Artifact и пришли лог build job.
+1. Перед обновлением экспортируйте бэкап из работающей версии. Клонируйте репозиторий через GitHub Desktop или по [README](../README.md#быстрый-старт-от-клона-до-тестов). Не копируйте старый архив исходников поверх актуального клона.
+2. Если меняли код, закоммитьте изменения в рабочую ветку и отправьте её на GitHub. В корне должны быть `package.json`, `package-lock.json`, `src`, `src-tauri` и `.github/workflows/release.yml`.
+3. Откройте Actions → Release Windows → Run workflow → выберите ветку с нужным коммитом. Сначала выполняются юнит- и E2E-тесты, затем Windows-сборка. PR запускает только тесты, не сборку EXE.
+4. При успехе скачайте Artifacts → Focusday-Windows. Распакуйте ZIP: `*-setup.exe` — установщик, `focusday.exe` — portable, `.msi` — альтернативный установщик. При ошибке смотрите первое сообщение об ошибке в job, а не используйте старый EXE.
+5. Ручной запуск по ветке не задаёт `tagName` в `tauri-action`: рассчитывайте на Artifact, а не на автоматический Draft Release. Для черновика релиза workflow также запускается при push тега `v*`; тег должен соответствовать версиям в `package.json`, `src-tauri/tauri.conf.json` и `src-tauri/Cargo.toml`. Не переиспользуйте опубликованный тег. Перед публикацией проверьте Windows-запуск, задачи, таймер, бэкап и сохранение после полного выхода.
 
-## Вариант Б — собрать у себя
+На Windows исполняемый файл должен быть **пересобран**: копирование HTML рядом с уже собранным EXE не меняет встроенные ресурсы.
+
+## Вариант Б — собрать у себя (Windows 10/11)
+
+Полная установка Git, Node.js 24 LTS, Rust MSVC, C++ Build Tools с Windows SDK
+и WebView2, а также клонирование и `npm ci` — в [TAURI_GUIDE.md](TAURI_GUIDE.md).
+Откройте новый терминал после установки инструментов и перейдите в корень клона:
+
+```sh
+npm ci
+npm test
+npm run build       # сначала npm run bundle, затем Tauri/Windows installers
 ```
-winget install Rustlang.Rustup OpenJS.NodeJS.LTS Microsoft.VisualStudio.2022.BuildTools
-#   (в установщике Build Tools отметь «Desktop development with C++»)
-npm install
-npm test            # юнит-тесты (5 сек)
-npm run build       # сам выполнит npm run bundle (src/js → src/focusday.js), потом tauri build
-```
-**Важно с v1.3:** исходники — модули в `src/js/`. Файл `src/focusday.js` собирается из них командой `npm run bundle` (или `npm run bundle:watch` во время правок). Правишь `src/js/*`, а не `focusday.js`.
-Иконки уже сгенерированы (`src-tauri/icons`). Свою иконку: заменить `app-icon.png` → `npm run icon`.
+
+Артефакты: `src-tauri/target/release/bundle/nsis/*.exe`,
+`src-tauri/target/release/bundle/msi/*.msi`, `src-tauri/target/release/focusday.exe`.
+
+**Важно:** исходники — модули в `src/js/`. Файл `src/focusday.js` собирается из них
+командой `npm run bundle` (или `npm run bundle:watch` во время правок).
+Иконки уже включены (`src-tauri/icons`); `npm run icon` нужен только для их замены.
 
 ## Что отправлять в Telegram
 | Файл | Плюсы | Минусы |
@@ -55,7 +62,7 @@ npm run build       # сам выполнит npm run bundle (src/js → src/foc
 `tauri-plugin-updater`: приложение само проверяет `latest.json` в GitHub Releases и обновляется одной кнопкой. Требует ключ подписи обновлений (`tauri signer generate`).
 
 ## Чек-лист релиза
-- [ ] `version` в `tauri.conf.json` и `package.json` повышена
+- [ ] `version` в `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` и `package.json` согласована (также обновлены версия интерфейса и PWA-кэша; `npm test` проверяет согласованность)
 - [ ] `identifier` **не менялся** (иначе пропадут данные)
 - [ ] Проверены: экспорт → удаление → импорт бэкапа
 - [ ] Запуск на «чистой» Windows 10 (виртуалка / ПК друга)

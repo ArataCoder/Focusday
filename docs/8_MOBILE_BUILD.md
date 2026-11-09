@@ -16,33 +16,47 @@
 | Трей, окно поверх всех программ, Ctrl+Alt+Space | ❌ | ❌ (нет такого в мобильных ОС) |
 | Таймер в фоне при выключенном экране | ⚠️ ОС может усыпить | ⚠️ уведомления — да |
 
+## Перед началом
+
+Сначала выполните клонирование, `npm ci`, `npm run bundle` и `npm test`
+из [README](../README.md#быстрый-старт-от-клона-до-тестов). Все команды ниже — из корня клона.
+Нативные мобильные сборки **не проверены** этим аудитом; рабочий проверенный
+путь без SDK — веб-сборка и Chromium-тесты. Требования SDK сверяйте с
+[документацией Tauri v2](https://v2.tauri.app/start/prerequisites/).
+
 ## Путь 1 — PWA (рекомендую начать с него)
+Сначала можно проверить локально: `npm run pwa:serve` →
+http://localhost:3000/focusday.html. Для телефона нужен HTTPS-хостинг.
+
 1. Залить на GitHub (уже есть для EXE) → dash.cloudflare.com → Workers & Pages → Create → Pages → Connect to Git → репозиторий.
-   Build command: `npm run bundle`, Output directory: `src`.
+   Build command: `npm ci && npm run bundle`, Output directory: `src`.
 2. Открой `https://focusday-xxx.pages.dev/focusday.html` (корень сайта может не содержать главную страницу).
 3. Android (Chrome): ⋮ → «Установить приложение». iPhone (Safari): «Поделиться» → «На экран Домой».
 4. Настройки → Синхронизация → тот же Supabase и пароль, что на ПК.
 
 ## Путь 2 — Android APK через Tauri 2
 **Один раз поставить (Windows):**
-1. Android Studio → SDK Manager: Android SDK Platform 34, Build-Tools, **NDK (Side by side)**, Command-line Tools.
+Сначала установите Rust и настольные инструменты из [TAURI_GUIDE.md](TAURI_GUIDE.md),
+затем [Android prerequisites Tauri](https://v2.tauri.app/start/prerequisites/#android).
+Версии ниже отражают текущий `.github/workflows/android.yml`, а не проверенную мобильную сборку.
+1. Android Studio → SDK Manager: Android SDK Platform 34, Build-Tools 34.0.0, **NDK 27.0.12077973 (Side by side)**, Command-line Tools.
 2. Переменные среды: `JAVA_HOME` = `C:\Program Files\Android\Android Studio\jbr`, `ANDROID_HOME` = `%LOCALAPPDATA%\Android\Sdk`, `NDK_HOME` = `%ANDROID_HOME%\ndk\<версия>`.
 3. `rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android`
 
 **Сборка:**
 ```
-npm install
+npm ci
 npm run android:init        # один раз: создаст src-tauri/gen/android
 npm run android:dev         # запуск на телефоне по USB (включи «Отладку по USB») или в эмуляторе
 npm run android:apk-debug   # APK для себя: src-tauri/gen/android/app/build/outputs/apk/
 npm run android:build       # релизный APK (нужно подписать — см. ниже)
 ```
-Подпись релиза: `keytool -genkey -v -keystore focusday.jks -keyalg RSA -keysize 2048 -validity 10000 -alias focusday`, затем прописать keystore в `src-tauri/gen/android/app/build.gradle.kts` (раздел signingConfigs) — инструкция: v2.tauri.app/distribute/sign/android.
-Без Android Studio локально: Actions → «Build Android APK» (`.github/workflows/android.yml`; сначала локально `android:init` и закоммитить `gen/android`).
+Подпись релиза: `keytool -genkey -v -keystore focusday.jks -keyalg RSA -keysize 2048 -validity 10000 -alias focusday`, затем прописать keystore в `src-tauri/gen/android/app/build.gradle.kts` (раздел signingConfigs) — [инструкция Tauri](https://v2.tauri.app/distribute/sign/android/). Не коммитьте keystore и пароли.
+Actions → «Build Android APK» (`.github/workflows/android.yml`) не заменяет инициализацию: в текущем клоне нет `src-tauri/gen/android`. Сначала на настроенной локальной машине выполните `android:init` и добавьте сгенерированный проект в репозиторий (не ключи подписи). До этого workflow не готов к сборке APK.
 Установка друзьям: отправить APK → «Разрешить установку из неизвестных источников». Google Play — разовые 25 $.
 
 ## Путь 3 — iOS
-* Нужен **Mac** с Xcode (или облачный Mac: MacinCloud, GitHub Actions `macos-latest`).
+* Нужен **Mac** с полным Xcode, Rust, Homebrew и CocoaPods: [iOS prerequisites Tauri](https://v2.tauri.app/start/prerequisites/#ios). Установите Node.js и выполните клонирование и `npm ci` по README также на этом Mac. Готового iOS workflow в репозитории нет.
 * Бесплатный Apple ID — установка только на свой iPhone, приложение живёт 7 дней. Apple Developer Program (99 $/год) — TestFlight для друзей и App Store.
 ```
 rustup target add aarch64-apple-ios aarch64-apple-ios-sim
