@@ -2,10 +2,24 @@
 // CHROMIUM_PATH=/path/to/chrome — если браузер Playwright не установлен (npx playwright install chromium).
 import { chromium } from 'playwright';
 import { buildSync } from 'esbuild';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import { createServer } from 'node:http';
+import { readFile } from 'node:fs/promises';
+import { extname, resolve, sep } from 'node:path';
 import assert from 'node:assert/strict';
 
-const APP = pathToFileURL(fileURLToPath(new URL('../../src/focusday.html', import.meta.url))).href;
+// HTTP даёт стабильный origin для хранилища при reload, в отличие от file://.
+const root = fileURLToPath(new URL('../../src/', import.meta.url));
+const mime = {'.html':'text/html', '.js':'text/javascript', '.css':'text/css', '.webmanifest':'application/manifest+json', '.png':'image/png'};
+const server = createServer(async (req, res) => {
+  const file = resolve(root, '.' + new URL(req.url, 'http://localhost').pathname);
+  if (!file.startsWith(resolve(root) + sep)) { res.writeHead(403).end(); return; }
+  try { const body = await readFile(file); res.writeHead(200, {'Content-Type': mime[extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store'}); res.end(body); }
+  catch { res.writeHead(404).end(); }
+});
+await new Promise(r => server.listen(0, '127.0.0.1', r));
+server.unref();
+const APP = `http://127.0.0.1:${server.address().port}/focusday.html`;
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
 const iso = (d) => { const x = new Date(); x.setDate(x.getDate() + d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };
 const task = (id, title, date) => ({ id, title, date, status: 'todo', priority: 2, duration: 15, listId: 'inbox', createdAt: Date.now(), updatedAt: Date.now(), steps: [] });
@@ -18,7 +32,8 @@ async function step(name, fn) {
 async function open(ctx, d) {
   const p = await ctx.newPage(); const errors = [];
   p.on('pageerror', (e) => errors.push(e.message));
-  await p.addInitScript((d) => { window.__FD_TEST_IDLE__ = 0; if (!sessionStorage.getItem('seeded')) { localStorage.setItem('focusday.data.v1', JSON.stringify(d)); sessionStorage.setItem('seeded', '1'); } }, d);
+  // При reload не перезаписываем сохранённые данные исходным seed.
+  await p.addInitScript((d) => { window.__FD_TEST_IDLE__ = 0; if (!localStorage.getItem('focusday.data.v1')) localStorage.setItem('focusday.data.v1', JSON.stringify(d)); }, d);
   await p.goto(APP); await p.waitForFunction(() => window.__FD_TEST__);
   p.errors = errors; p.D = () => p.evaluate(() => JSON.parse(JSON.stringify(window.__FD_TEST__.data)));
   return p;
@@ -191,6 +206,7 @@ await step('Регрессия: пауза таймера сохраняется
   await p.waitForFunction(remaining => { const d = JSON.parse(localStorage.getItem('focusday.data.v1') || '{}'); return !d.focusRunning && d.focusRemainingMs === remaining; }, stopped.focusRemainingMs, { timeout: 10000 });
   const persisted = await p.evaluate(() => JSON.parse(localStorage.getItem('focusday.data.v1')));
   assert.equal(persisted.focusRunning, false); assert.equal(persisted.focusRemainingMs, stopped.focusRemainingMs);
+  await p.evaluate(() => sessionStorage.clear()); // сохранение не должно зависеть от sessionStorage
   await p.reload(); await p.waitForFunction(() => window.__FD_TEST__); const after = await p.D();
   assert.equal(after.focusRunning, false); assert.equal(after.focusRemainingMs, stopped.focusRemainingMs);
   assert.deepEqual(p.errors, []);
@@ -209,5 +225,6 @@ await step('Регрессия: XP при переносе и сбросе бе�
 });
 
 await browser.close();
+server.close();
 console.log(failed ? `\n${failed} тест(ов) упало` : '\nВсе E2E-тесты прошли');
 process.exit(failed ? 1 : 0);

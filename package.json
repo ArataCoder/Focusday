@@ -17,14 +17,20 @@
     "android:build": "tauri android build --apk",
     "ios:init": "tauri ios init",
     "ios:build": "tauri ios build",
-    "pwa:serve": "npx serve src",
+    "pwa:serve": "npm run bundle && serve src --listen 3000",
     "tauri": "tauri",
     "android:apk-debug": "tauri android build --apk --debug"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
     "esbuild": "^0.24",
-    "playwright": "^1.48"
+    "playwright": "^1.48",
+    "serve": "^14.2.7"
   },
-  "type": "module"
+  "type": "module",
+  "overrides": {
+    "serve": {
+      "compression": "^1.8.2"
+    }
+  }
 }
