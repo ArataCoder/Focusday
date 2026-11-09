@@ -36,6 +36,23 @@ test('Слияние: новые задачи с телефона + свежая
   assert.equal(merged.quotes.custom.length, 1);
 });
 
+for (const updatedAt of [100, 200]) {
+  test(`Backup preview does not mutate habit logs (incoming timestamp ${updatedAt})`, () => {
+    const base = { tasks: [], lists: [], deleted: {} };
+    const local = { ...base, habits: [{ id: 'h1', name: 'Local habit', updatedAt: 200, log: { '2026-11-08': 2 } }] };
+    const incoming = { ...base, habits: [{ id: 'h1', name: 'Backup habit', updatedAt, log: { '2026-11-08': 1, '2026-11-09': 2 } }] };
+    const localBefore = structuredClone(local), incomingBefore = structuredClone(incoming);
+
+    const { merged } = mergeData(local, incoming);
+
+    assert.deepEqual(local, localBefore, 'preview must not change live data before confirmation');
+    assert.deepEqual(incoming, incomingBefore, 'backup data must remain unchanged');
+    assert.equal(merged.habits[0].name, 'Local habit');
+    assert.deepEqual(merged.habits[0].log, { '2026-11-08': 2, '2026-11-09': 2 });
+    assert.notStrictEqual(merged.habits[0].log, local.habits[0].log);
+  });
+}
+
 test('Supabase-коннектор: вход, чтение, запись с оптимистичной блокировкой (mock)', async () => {
   const calls = []; let row = null;
   Cloud.fetch = async (url, opt = {}) => {
